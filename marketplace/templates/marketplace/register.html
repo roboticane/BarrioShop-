@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registra tu Negocio - BarrioShop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen py-10 px-4">
+    <div class="max-w-lg mx-auto bg-white p-8 rounded-2xl shadow-md">
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">🏪 Registra tu Microempresa</h1>
+        <p class="text-sm text-gray-500 mb-6">Únete a BarrioShop para que los clientes cercanos te encuentren y contacten por WhatsApp.</p>
+        
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            {{ form.as_p }}
+            
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl transition shadow-sm">
+                Guardar Negocio
+            </button>
+        </form>
+        
+        <div class="mt-6 text-center">
+            <a href="{% url 'home' %}" class="text-sm text-blue-600 hover:underline font-medium">← Volver al inicio</a>
+        </div>
+    </div>
+</body>
+</html>

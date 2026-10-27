@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Control - BarrioShop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <header class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-gray-800">📦 Panel de Control de Negocio</h1>
+            <div class="flex items-center gap-4">
+                <a href="{% url 'home' %}" class="text-sm text-blue-600 hover:underline">Ver sitio público</a>
+                <a href="{% url 'business_logout' %}" class="text-xs bg-red-600 text-white px-3 py-2 rounded-lg font-medium hover:bg-red-700 transition">Cerrar Sesión</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <div class="bg-white p-6 rounded-2xl shadow-sm mb-6 flex justify-between items-center">
+            <div>
+                <h2 class="text-lg font-bold text-gray-800">Bienvenido, Comerciante</h2>
+                <p class="text-sm text-gray-500">Aquí puedes gestionar los productos activos de tu tienda en BarrioShop.</p>
+            </div>
+            <a href="{% url 'add_product' %}" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition shadow-sm">
+                ➕ Publicar Nuevo Producto
+            </a>
+        </div>
+
+        <!-- Lista de productos propios -->
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-50 border-b text-xs font-bold text-gray-500 uppercase">
+                        <th class="p-4">Producto</th>
+                        <th class="p-4">Negocio</th>
+                        <th class="p-4">Categoría</th>
+                        <th class="p-4">Precio</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y text-sm text-gray-700">
+                    {% for product in products %}
+                    <tr>
+                        <td class="p-4 font-semibold flex items-center gap-3">
+                            {% if product.image %}
+                                <img src="{{ product.image.url }}" class="w-10 h-10 object-cover rounded-lg">
+                            {% endif %}
+                            {{ product.name }}
+                        </td>
+                        <td class="p-4 text-blue-600">{{ product.business.name }}</td>
+                        <td class="p-4 uppercase text-xs font-bold text-gray-500">{{ product.category }}</td>
+                        <td class="p-4 font-extrabold">${{ product.price }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="p-8 text-center text-gray-400">No tienes productos registrados todavía.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+</body>
+</html>

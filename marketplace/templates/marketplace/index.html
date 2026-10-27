@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BarrioShop - Puebla Compra Local</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Leaflet CSS y JS para el Mapa Interactivo -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    
+    <!-- Barra de Navegación -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-2">
+                <span class="text-2xl">🛒</span>
+                <h1 class="text-2xl font-bold text-gray-800">BarrioShop <span class="text-xs bg-blue-100 text-blue-700 font-semibold px-2 py-0.5 rounded">Puebla</span></h1>
+            </div>
+            
+            <!-- Estado de la Ubicación -->
+            <div id="location-status" class="text-xs sm:text-sm text-gray-600 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-full flex items-center shadow-inner">
+                <span class="animate-pulse mr-2">📍</span> Obteniendo tu ubicación actual...
+            </div>
+            
+            <!-- Botones de Acción -->
+            <div class="flex items-center gap-2">
+                <a href="{% url 'business_login' %}" class="text-xs bg-amber-600 hover:bg-amber-700 text-white px-3 py-2 rounded-md font-medium transition shadow-sm">
+                    🔐 Acceso Negocios
+                </a>
+                <a href="{% url 'register_business' %}" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium transition shadow-sm">
+                    ➕ Registrar mi Negocio
+                </a>
+                <a href="/admin/" target="_blank" class="text-xs bg-gray-800 hover:bg-gray-900 text-white px-3 py-2 rounded-md font-medium transition">
+                    ⚙️ Admin
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        
+        <!-- Barra de Búsqueda y Accesos -->
+        <div class="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-2xl shadow-sm">
+            <form method="get" class="w-full flex gap-2">
+                <input type="text" name="q" value="{{ query }}" placeholder="¿Qué estás buscando? (ej. Tacos, Refacciones, Abarrotes...)" 
+                       class="w-full px-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl text-sm font-semibold transition shadow-sm">
+                    Buscar
+                </button>
+            </form>
+            
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <a href="{% url 'add_product' %}" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-medium transition shadow-sm whitespace-nowrap">
+                    📦 Publicar Producto
+                </a>
+            </div>
+        </div>
+
+        <!-- Botones de Filtro por Categorías -->
+        <div class="mb-6 flex flex-wrap gap-2 items-center bg-white p-4 rounded-2xl shadow-sm">
+            <span class="text-xs font-bold text-gray-500 uppercase tracking-wide mr-1">Categorías:</span>
+            <a href="{% url 'home' %}" class="px-3 py-1.5 rounded-full text-xs font-semibold transition {% if not selected_category %}bg-blue-600 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-200 border border-gray-200{% endif %}">
+                Todo
+            </a>
+            <a href="?category=abarrotes" class="px-3 py-1.5 rounded-full text-xs font-semibold transition {% if selected_category == 'abarrotes' %}bg-blue-600 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-200 border border-gray-200{% endif %}">
+                🛒 Abarrotes
+            </a>
+            <a href="?category=refacciones" class="px-3 py-1.5 rounded-full text-xs font-semibold transition {% if selected_category == 'refacciones' %}bg-blue-600 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-200 border border-gray-200{% endif %}">
+                ⚙️ Refacciones
+            </a>
+            <a href="?category=comida" class="px-3 py-1.5 rounded-full text-xs font-semibold transition {% if selected_category == 'comida' %}bg-blue-600 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-200 border border-gray-200{% endif %}">
+                🌮 Comida
+            </a>
+            <a href="?category=servicios" class="px-3 py-1.5 rounded-full text-xs font-semibold transition {% if selected_category == 'servicios' %}bg-blue-600 text-white shadow-sm{% else %}bg-white text-gray-600 hover:bg-gray-200 border border-gray-200{% endif %}">
+                🛠️ Servicios
+            </a>
+        </div>
+
+        <!-- Sección del Mapa Interactivo -->
+        <div class="mb-8 bg-white p-4 rounded-2xl shadow-sm">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-md font-bold text-gray-800 flex items-center gap-2">
+                    <span>🗺️</span> Mapa de Negocios Cercanos
+                </h3>
+                <span class="text-xs text-gray-400">Pines interactivos</span>
+            </div>
+            <div id="map" class="w-full h-64 sm:h-80 rounded-xl border border-gray-200 z-10"></div>
+        </div>
+
+        <div class="mb-6">
+            <h2 class="text-xl font-bold text-gray-800">Negocios y Promociones Cerca de Ti</h2>
+            <p class="text-sm text-gray-500">Mostrando productos en un radio de hasta 5 km de tu posición.</p>
+        </div>
+
+        <!-- Grid de Productos -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {% for product in products %}
+            <div class="bg-white rounded-xl shadow-md overflow-hidden flex flex-col justify-between hover:shadow-lg transition">
+                <div>
+                    <!-- Imagen del producto -->
+                    <div class="relative h-48 bg-gray-200">
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                        {% else %}
+                            <div class="flex items-center justify-center h-full text-gray-400 text-sm">Sin imagen</div>
+                        {% endif %}
+                        <!-- Distancia flotante -->
+                        <span class="absolute top-2 left-2 bg-black/60 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full">
+                            📍 A {{ product.distance_km }} km
+                        </span>
+                    </div>
+
+                    <!-- Información del Producto -->
+                    <div class="p-4">
+                        <span class="text-xs font-medium text-blue-600 uppercase tracking-wide">{{ product.business.name }}</span>
+                        <h3 class="font-bold text-gray-900 text-lg mt-1 leading-tight">{{ product.name }}</h3>
+                        <p class="text-gray-500 text-xs mt-1 line-clamp-2">{{ product.description }}</p>
+                        
+                        <!-- Precios -->
+                        <div class="mt-3 flex items-baseline gap-2">
+                            {% if product.is_promo and product.promo_price %}
+                                <span class="text-red-600 font-extrabold text-xl">${{ product.promo_price }}</span>
+                                <span class="text-gray-400 line-through text-sm">${{ product.price }}</span>
+                                <span class="text-[10px] bg-red-100 text-red-700 font-bold px-1.5 py-0.5 rounded">OFERTA</span>
+                            {% else %}
+                                <span class="text-gray-900 font-extrabold text-xl">${{ product.price }}</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- Sección de Reseñas y Calificación -->
+                        <div class="mt-4 pt-3 border-t border-gray-100">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-amber-500 flex items-center gap-1">
+                                    ⭐ 5.0 <span class="text-gray-400 font-normal">({{ product.reviews.count }} opiniones)</span>
+                                </span>
+                                <details class="text-right">
+                                    <summary class="text-[11px] text-blue-600 font-semibold cursor-pointer hover:underline select-none">
+                                        + Calificar
+                                    </summary>
+                                    
+                                    <!-- Formulario rápido de reseña -->
+                                    <form action="{% url 'add_review' product.id %}" method="post" class="mt-2 text-left bg-gray-50 p-2 rounded-lg border border-gray-200">
+                                        {% csrf_token %}
+                                        <input type="text" name="author_name" placeholder="Tu nombre" required class="w-full text-xs p-1.5 mb-1.5 border rounded">
+                                        <select name="rating" class="w-full text-xs p-1.5 mb-1.5 border rounded bg-white">
+                                            <option value="5">⭐⭐⭐⭐⭐ (5/5)</option>
+                                            <option value="4">⭐⭐⭐⭐ (4/5)</option>
+                                            <option value="3">⭐⭐⭐ (3/5)</option>
+                                            <option value="2">⭐⭐ (2/5)</option>
+                                            <option value="1">⭐ (1/5)</option>
+                                        </select>
+                                        <textarea name="comment" placeholder="Comentario..." required class="w-full text-xs p-1.5 mb-1.5 border rounded" rows="2"></textarea>
+                                        <button type="submit" class="w-full bg-blue-600 text-white text-xs font-bold py-1 rounded hover:bg-blue-700 transition">
+                                            Enviar
+                                        </button>
+                                    </form>
+                                </details>
+                            </div>
+
+                            <!-- Lista rápida de opiniones anteriores -->
+                            {% if product.reviews.all %}
+                                <div class="mt-2 space-y-1">
+                                    {% for review in product.reviews.all|slice:":2" %}
+                                        <div class="text-[11px] bg-gray-50 p-1.5 rounded border border-gray-100">
+                                            <span class="font-bold text-gray-700">{{ review.author_name }}:</span> 
+                                            <span class="text-amber-500">⭐ {{ review.rating }}/5</span>
+                                            <p class="text-gray-500 italic text-[10px] leading-tight">"{{ review.comment }}"</p>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Botón de WhatsApp -->
+                <div class="p-4 bg-gray-50 border-t border-gray-100">
+                    <a href="https://wa.me/{{ product.business.whatsapp }}?text=Hola,%20vi%20tu%20producto%20*{{ product.name }}*%20en%20BarrioShop%20y%20me%2520interesa." 
+                       target="_blank" 
+                       class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition shadow-sm">
+                        💬 Contactar por WhatsApp
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-full bg-white rounded-xl p-12 text-center shadow-sm">
+                <p class="text-4xl mb-3">🔍</p>
+                <h3 class="text-lg font-bold text-gray-700">No hay productos cerca de ti</h3>
+                <p class="text-sm text-gray-500 mt-1">Intenta registrar un negocio o acércate a otra zona.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+
+    <!-- Script de Geolocalización y Carga del Mapa -->
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const statusEl = document.getElementById('location-status');
+            
+            const userLat = {{ user_lat }};
+            const userLng = {{ user_lng }};
+            const businesses = {{ businesses_json|safe }};
+
+            const map = L.map('map').setView([userLat, userLng], 13);
+
+            L.tileLayer('https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}{r}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://wikimediafoundation.org/wiki/Maps_Terms_of_Use">Wikimedia</a> contributors'
+            }).addTo(map);
+
+            L.marker([userLat, userLng]).addTo(map)
+                .bindPopup('<b>📍 Tu posición actual</b>')
+                .openPopup();
+
+            businesses.forEach(b => {
+                L.marker([b.lat, b.lng]).addTo(map)
+                    .bindPopup(`
+                        <div class="p-1">
+                            <b class="text-sm text-blue-600">${b.name}</b><br>
+                            <span class="text-xs text-gray-500">${b.address}</span><br>
+                            <a href="https://wa.me/${b.whatsapp}" target="_blank" class="inline-block mt-2 text-xs text-emerald-600 font-bold">💬 Contactar por WhatsApp</a>
+                        </div>
+                    `);
+            });
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        
+                        const urlParams = new URLSearchParams(window.location.search);
+                        if (!urlParams.has('lat') || !urlParams.has('lng')) {
+                            window.location.href = `?lat=${lat}&lng=${lng}`;
+                        } else {
+                            statusEl.innerHTML = `📍 Ubicación activa (Radio: 5 km)`;
+                        }
+                    },
+                    (error) => {
+                        statusEl.innerHTML = `⚠️ Ubicación desactivada o denegada (Usando Puebla Centro)`;
+                    },
+                    { timeout: 10000, maximumAge: 60000 }
+                );
+            } else {
+                statusEl.innerHTML = `⚠️ Geolocalización no compatible con este navegador.`;
+            }
+        });
+    </script>
+</body>
+</html>
