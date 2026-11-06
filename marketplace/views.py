@@ -5,6 +5,7 @@ from django.contrib.auth import login, authenticate, logout, get_user_model
 from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
+from django.db import IntegrityError
 from math import radians, sin, cos, sqrt, atan2
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -166,9 +167,15 @@ def register_business_view(request):
     if request.method == 'POST':
         form = BusinessRegistrationForm(request.POST, request.FILES)
         if form.is_valid():
-            business = form.save()
-            login(request, business.user)
-            return redirect('business_dashboard')
+            try:
+                business = form.save()
+                login(request, business.user)
+                messages.success(request, "¡Tu negocio ha sido registrado con éxito!")
+                return redirect('business_dashboard')
+            except IntegrityError:
+                messages.error(request, "⚠️ El nombre de usuario o correo electrónico ya se encuentra registrado. Por favor utiliza otro o inicia sesión.")
+        else:
+            messages.error(request, "⚠️ Por favor corrige los errores en el formulario.")
     else:
         form = BusinessRegistrationForm()
     
