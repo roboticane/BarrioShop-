@@ -3,28 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Acceso Negocios - BarrioShop</title>
+    <title>Acceso y Recuperación - BarrioShop</title>
+    <!-- Cargamos Tailwind CSS para un diseño limpio y responsivo -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
-    <div class="bg-white p-8 rounded-2xl shadow-md w-full max-w-md">
+<body class="bg-gray-50 flex items-center justify-center min-h-screen py-10">
+
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md">
+        
+        <!-- ENCABEZADO -->
         <div class="text-center mb-6">
-            <span class="text-4xl">🔐</span>
-            <h1 class="text-2xl font-bold text-gray-800 mt-2">Portal de Negocios</h1>
-            <p class="text-sm text-gray-500">Inicia sesión para administrar tu tienda</p>
+            <h1 class="text-2xl font-bold text-gray-800">Portal de Negocios</h1>
+            <p class="text-sm text-gray-500 mt-1">Administra tu tienda o recupera tu acceso</p>
         </div>
 
-        <form method="post" class="space-y-4">
-            {% csrf_token %}
-            {{ form.as_p }}
-            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl transition shadow-sm">
-                Iniciar Sesión
-            </button>
-        </form>
+        <!-- 1. FORMULARIO DE INICIO DE SESIÓN HABITUAL -->
+        <div id="login-section">
+            <!-- Alertas de error de login normal -->
+            {% if error_message %}
+                <div class="mb-4 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 text-xs rounded">
+                    <p>{{ error_message }}</p>
+                </div>
+            {% endif %}
 
-        <div class="mt-6 text-center">
-            <a href="{% url 'home' %}" class="text-xs text-blue-600 hover:underline">← Volver al inicio</a>
+            <form method="POST" action="{% url 'business_login' %}" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Usuario o Correo</label>
+                    <input type="text" name="username" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="Ej. IKIGAI" required>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                    <input type="password" name="password" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none text-sm" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition shadow-sm text-sm">
+                    Iniciar Sesión
+                </button>
+            </form>
+
+            <!-- Botón desplegable para alternar al modo de recuperación -->
+            <div class="mt-4 text-center">
+                <button onclick="toggleResetForm()" class="text-xs text-amber-600 font-semibold hover:underline focus:outline-none">
+                    ¿Olvidaste tu contraseña? Actualízala aquí mismo
+                </button>
+            </div>
+        </div>
+
+
+        <!-- 2. FORMULARIO DE RECUPERACIÓN DIRECTA (Oculto por defecto, se muestra al hacer clic) -->
+        <div id="reset-section" class="hidden mt-4 pt-4 border-t border-gray-200">
+            <h3 class="text-sm font-bold text-gray-800 mb-2">🔄 Restablecer Contraseña Directa</h3>
+            <p class="text-xs text-gray-500 mb-3">Ingresa tu usuario y escribe una nueva contraseña para actualizarla al instante.</p>
+
+            <!-- Alertas de éxito o error en la recuperación -->
+            {% if reset_error %}
+                <div class="mb-3 p-2 bg-red-50 border-l-4 border-red-500 text-red-700 text-xs rounded">
+                    {{ reset_error }}
+                </div>
+            {% endif %}
+            {% if reset_success %}
+                <div class="mb-3 p-2 bg-green-50 border-l-4 border-green-500 text-green-700 text-xs rounded">
+                    {{ reset_success }}
+                </div>
+            {% endif %}
+
+            <form method="POST" action="{% url 'reset_password_direct' %}" class="space-y-3">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Tu Usuario o Correo</label>
+                    <input type="text" name="identifier" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none text-sm" placeholder="Ej. IKIGAI" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Nueva Contraseña</label>
+                    <input type="password" name="new_password" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none text-sm" placeholder="Nueva contraseña" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-700 mb-1">Confirmar Nueva Contraseña</label>
+                    <input type="password" name="confirm_password" class="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 outline-none text-sm" placeholder="Repite la contraseña" required>
+                </div>
+                <button type="submit" class="w-full bg-amber-600 text-white py-2 rounded-lg font-semibold hover:bg-amber-700 transition text-sm">
+                    Guardar Nueva Contraseña
+                </button>
+            </form>
+
+            <div class="mt-3 text-center">
+                <button onclick="toggleResetForm()" class="text-xs text-gray-500 hover:underline">
+                    ← Volver al inicio de sesión
+                </button>
+            </div>
+        </div>
+
+        <!-- ENLACES GENERALES -->
+        <div class="text-center mt-6 pt-4 border-t border-gray-100 space-y-2">
+            <p class="text-xs text-gray-500">
+                ¿No tienes cuenta? <a href="{% url 'register_business' %}" class="text-blue-600 font-semibold hover:underline">Regístrate</a>
+            </p>
+            <a href="{% url 'home' %}" class="text-xs text-gray-400 hover:underline block">- Volver al Inicio</a>
         </div>
     </div>
+
+    <!-- Script sencillo para alternar entre el login y la recuperación sin recargar la página -->
+    <script>
+        function toggleResetForm() {
+            const loginSec = document.getElementById('login-section');
+            const resetSec = document.getElementById('reset-section');
+            loginSec.classList.toggle('hidden');
+            resetSec.classList.toggle('hidden');
+        }
+
+        // Si el servidor procesó una solicitud de reset, mantenemos abierta la sección de recuperación
+        {% if show_reset_form %}
+            document.addEventListener("DOMContentLoaded", function() {
+                toggleResetForm();
+            });
+        {% endif %}
+    </script>
 </body>
 </html>

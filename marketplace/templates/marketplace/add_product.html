@@ -3,26 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agregar Producto - BarrioShop</title>
+    <title>Publicar Producto - BarrioShop</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen py-10 px-4">
-    <div class="max-w-lg mx-auto bg-white p-8 rounded-2xl shadow-md">
-        <h1 class="text-2xl font-bold text-gray-800 mb-2">📦 Publicar Nuevo Producto</h1>
-        <p class="text-sm text-gray-500 mb-6">Añade productos o promociones al catálogo de tu negocio.</p>
-        
+<body class="bg-gray-100 min-h-screen py-10 px-4 font-sans">
+    <div class="max-w-xl mx-auto bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-xl font-bold text-gray-800">📦 Publicar Nuevo Producto</h1>
+                <p class="text-xs text-gray-500 mt-0.5">Añade productos o promociones al catálogo de tu tienda.</p>
+            </div>
+            <a href="{% url 'business_dashboard' %}" class="text-xs text-gray-500 hover:text-gray-800 font-semibold whitespace-nowrap">← Volver al Panel</a>
+        </div>
+
         <form method="post" enctype="multipart/form-data" class="space-y-4">
             {% csrf_token %}
-            {{ form.as_p }}
             
-            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-4 rounded-xl transition shadow-sm">
+            {{ form.non_field_errors }}
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Negocio:</label>
+                {{ form.business }}
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Nombre del Producto:</label>
+                {{ form.name }}
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Descripción:</label>
+                {{ form.description }}
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Precio ($):</label>
+                    {{ form.price }}
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Condición de la pieza:</label>
+                    {{ form.condition }}
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Categoría:</label>
+                    {{ form.category }}
+                </div>
+                <div class="flex items-center pt-5">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        {{ form.is_promo }}
+                        <span class="text-xs font-bold text-gray-700 uppercase">¿Aplicar Descuento General?</span>
+                    </label>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Precio con Descuento (Opcional):</label>
+                {{ form.promo_price }}
+            </div>
+
+            <!-- APARTADO DE LAS 3 FOTOGRAFÍAS -->
+            <div class="bg-gray-50 p-4 rounded-xl border border-dashed border-gray-300 space-y-3">
+                <h3 class="text-xs font-bold text-gray-800 uppercase flex items-center gap-1">
+                    📸 Fotografías del Producto (Hasta 3 imágenes)
+                </h3>
+                
+                <div>
+                    <label class="block text-[11px] font-semibold text-gray-600 mb-1">Foto Principal:</label>
+                    {{ form.image }}
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-gray-600 mb-1">Foto Secundaria 2:</label>
+                    {{ form.image_2 }}
+                </div>
+                <div>
+                    <label class="block text-[11px] font-semibold text-gray-600 mb-1">Foto Secundaria 3:</label>
+                    {{ form.image_3 }}
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl transition shadow-sm text-xs uppercase tracking-wider">
                 Guardar y Publicar Producto
             </button>
         </form>
-        
-        <div class="mt-6 text-center">
-            <a href="{% url 'home' %}" class="text-sm text-blue-600 hover:underline font-medium">← Volver al inicio</a>
-        </div>
     </div>
 </body>
 </html>

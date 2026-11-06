@@ -3,26 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registra tu Negocio - BarrioShop</title>
+    <title>Registro de Negocio - BarrioShop</title>
+    
+    <!-- Incluimos Tailwind CSS para el diseño visual limpio -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Incluimos los estilos CSS de Leaflet (para el mapa interactivo) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
-<body class="bg-gray-100 min-h-screen py-10 px-4">
-    <div class="max-w-lg mx-auto bg-white p-8 rounded-2xl shadow-md">
-        <h1 class="text-2xl font-bold text-gray-800 mb-2">🏪 Registra tu Microempresa</h1>
-        <p class="text-sm text-gray-500 mb-6">Únete a BarrioShop para que los clientes cercanos te encuentren y contacten por WhatsApp.</p>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen py-10">
+
+    <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-xl">
         
-        <form method="post" class="space-y-4">
+        <!-- Encabezado del formulario -->
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">Registra tu Microempresa</h1>
+            <p class="text-sm text-gray-500">Únete a BarrioShop seleccionando tu ubicación en el mapa.</p>
+        </div>
+
+        <!-- Formulario de Django -->
+        <form method="POST" class="space-y-4">
             {% csrf_token %}
-            {{ form.as_p }}
             
-            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl transition shadow-sm">
-                Guardar Negocio
+            <!-- Recorremos los campos del formulario -->
+            {% for field in form %}
+                <!-- Ocultamos los campos de latitud y longitud para llenarlos automáticamente desde el mapa -->
+                {% if field.name == 'latitude' or field.name == 'longitude' %}
+                    <div style="display: none;">
+                        {{ field.label_tag }}
+                        {{ field }}
+                    </div>
+                {% else %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}
+                            <p class="text-xs text-gray-400 mt-1">{{ field.help_text }}</p>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            {% endfor %}
+
+            <!-- SECCIÓN DEL MAPA INTERACTIVO -->
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    📍 Haz clic en el mapa para marcar tu ubicación o punto de entrega:
+                </label>
+                <!-- Contenedor visual del mapa -->
+                <div id="map" class="w-full h-64 rounded-lg border shadow-inner z-0"></div>
+                <p class="text-xs text-blue-600 mt-1 font-medium" id="coords-helper">Coordenada seleccionada: Ninguna (Haz clic en el mapa)</p>
+            </div>
+
+            <!-- Botón de envío -->
+            <button type="submit" class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition">
+                Registrar Negocio y Crear Cuenta
             </button>
         </form>
-        
-        <div class="mt-6 text-center">
-            <a href="{% url 'home' %}" class="text-sm text-blue-600 hover:underline font-medium">← Volver al inicio</a>
+
+        <div class="text-center mt-4">
+            <a href="{% url 'home' %}" class="text-sm text-gray-500 hover:underline">- Volver al Inicio</a>
         </div>
     </div>
+
+    <!-- Script de Leaflet JS para controlar el mapa -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // 1. Coordenadas iniciales centradas en Puebla, México
+        var defaultLat = 19.0413;
+        var defaultLng = -98.2062;
+        
+        var map = L.map('map').setView([defaultLat, defaultLng], 13);
+
+        // 2. Usamos la capa de OpenStreetMap Francia (100% libre, detalla calles y sin bloqueos)
+        L.tileLayer('https://{s}.tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png', {
+            maxZoom: 20,
+            attribution: '© OpenStreetMap contributors & OSGFRAMANCE'
+        }).addTo(map);
+
+        // 3. Creamos un marcador móvil que el usuario puede arrastrar o colocar con un clic
+        var marker = L.marker([defaultLat, defaultLng], {draggable: true}).addTo(map);
+
+        // Función para actualizar automáticamente los inputs ocultos de latitud y longitud
+        function updateCoordinates(lat, lng) {
+            document.querySelector('[name="latitude"]').value = lat;
+            document.querySelector('[name="longitude"]').value = lng;
+            document.getElementById('coords-helper').innerText = "📍 Coordenada guardada correctamente (" + lat.toFixed(5) + ", " + lng.toFixed(5) + ")";
+        }
+
+        // Inicializamos los valores por defecto
+        updateCoordinates(defaultLat, defaultLng);
+
+        // 4. Evento al hacer clic en cualquier parte del mapa
+        map.on('click', function(e) {
+            var lat = e.latlng.lat;
+            var lng = e.latlng.lng;
+            marker.setLatLng([lat, lng]);
+            updateCoordinates(lat, lng);
+        });
+
+        // 5. Evento si el usuario prefiere arrastrar el marcador con el ratón
+        marker.on('dragend', function(event) {
+            var position = marker.getLatLng();
+            updateCoordinates(position.lat, position.lng);
+        });
+    </script>
 </body>
 </html>
