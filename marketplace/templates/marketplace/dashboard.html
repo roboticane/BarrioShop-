@@ -12,8 +12,22 @@
     <header class="bg-white shadow-sm">
         <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
             <h1 class="text-xl font-bold text-gray-800">📦 Panel de Control de Negocio</h1>
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3">
                 <a href="{% url 'home' %}" class="text-sm text-blue-600 hover:underline">Ver sitio público</a>
+                
+                <!-- BOTÓN DE EDITAR PERFIL DE NEGOCIO -->
+                <a href="{% url 'edit_business_profile' %}" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-medium transition flex items-center gap-1 shadow-sm">
+                    ⚙️ Configurar Negocio
+                </a>
+
+                <!-- BOTÓN DE DESACTIVAR CUENTA -->
+                <form action="{% url 'deactivate_business' %}" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas desactivar tu negocio? Dejará de aparecer en el mapa y productos hasta que contactes al administrador.');" class="inline">
+                    {% csrf_token %}
+                    <button type="submit" class="text-xs bg-gray-600 hover:bg-gray-700 text-white px-3 py-2 rounded-lg font-medium transition">
+                        ⚠️ Desactivar Cuenta
+                    </button>
+                </form>
+
                 <a href="{% url 'business_logout' %}" class="text-xs bg-red-600 text-white px-3 py-2 rounded-lg font-medium hover:bg-red-700 transition">Cerrar Sesión</a>
             </div>
         </div>
@@ -21,6 +35,33 @@
 
     <main class="max-w-7xl mx-auto px-4 py-8">
         
+        <!-- TARJETAS DE ESTADÍSTICAS DEL NEGOCIO -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Productos en Catálogo</p>
+                    <h3 class="text-2xl font-black text-gray-800 mt-1">{{ total_products_count|default:0 }}</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl">📦</div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Promociones Exprés</p>
+                    <h3 class="text-2xl font-black text-amber-600 mt-1">{{ active_express_count|default:0 }} / 3</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">⚡</div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Ofertas con Descuento</p>
+                    <h3 class="text-2xl font-black text-emerald-600 mt-1">{{ promo_prices_count|default:0 }}</h3>
+                </div>
+                <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">🏷️</div>
+            </div>
+        </div>
+
         <!-- AVISO DE PROMOCIONES EXPRÉS / OFERTAS RELÁMPAGO -->
         <div class="bg-amber-50 border-l-4 border-amber-500 p-4 mb-6 rounded-r-xl shadow-sm">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
@@ -54,14 +95,14 @@
         <div class="bg-white p-6 rounded-2xl shadow-sm mb-6 flex justify-between items-center">
             <div>
                 <h2 class="text-lg font-bold text-gray-800">Bienvenido, {{ business.name|default:"Comerciante" }}</h2>
-                <p class="text-sm text-gray-500">Aquí puedes gestionar tus productos y definir tus ofertas relámpago en BarrioShop.</p>
+                <p class="text-sm text-gray-500">Aquí puedes gestionar tus productos y definir tus ofertas relámpago o destacar productos en BarrioShop.</p>
             </div>
             <a href="{% url 'add_product' %}" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition shadow-sm">
                 ➕ Publicar Nuevo Producto
             </a>
         </div>
 
-        <!-- TABLA DE PRODUCTOS Y SELECCIÓN DE PROMOCIÓN EXPRÉS -->
+        <!-- TABLA DE PRODUCTOS -->
         <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
@@ -70,9 +111,11 @@
                             <th class="p-4">Producto</th>
                             <th class="p-4">Negocio</th>
                             <th class="p-4">Categoría</th>
+                            <th class="p-4 text-center">Stock</th>
                             <th class="p-4">Precio Regular</th>
                             <th class="p-4">Precio de Oferta ($)</th>
                             <th class="p-4 text-center">Oferta Relámpago (24h)</th>
+                            <th class="p-4 text-center">Destacado (7d)</th>
                             <th class="p-4 text-center">Acciones</th>
                         </tr>
                     </thead>
@@ -101,6 +144,19 @@
                             <!-- Categoría -->
                             <td class="p-4 uppercase text-xs font-bold text-gray-500">
                                 {{ product.get_category_display }}
+                            </td>
+
+                            <!-- Botón de Control de Stock -->
+                            <td class="p-4 text-center">
+                                {% if product.is_available %}
+                                    <a href="{% url 'toggle_stock' product.id %}" class="inline-block bg-emerald-100 text-emerald-700 hover:bg-red-100 hover:text-red-700 font-bold text-[10px] px-3 py-1.5 rounded-full transition shadow-sm" title="Clic para marcar como agotado">
+                                        🟢 Disponible
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'toggle_stock' product.id %}" class="inline-block bg-red-100 text-red-700 hover:bg-emerald-100 hover:text-emerald-700 font-bold text-[10px] px-3 py-1.5 rounded-full transition shadow-sm" title="Clic para marcar como disponible">
+                                        🔴 Agotado
+                                    </a>
+                                {% endif %}
                             </td>
 
                             <!-- Precio Regular -->
@@ -137,17 +193,45 @@
                                 {% endif %}
                             </td>
 
-                            <!-- Botón Editar Producto -->
+                            <!-- NUEVO: Botón Activar / Desactivar Destacado Semanal (7 Días) -->
                             <td class="p-4 text-center">
-                                <a href="{% url 'edit_product' product.id %}" class="inline-block bg-blue-500 hover:bg-blue-600 text-white text-[10px] font-bold px-3 py-1.5 rounded-lg shadow-sm transition">
-                                    ✏️ Editar
-                                </a>
+                                {% if product.is_featured_active %}
+                                    <div class="inline-flex flex-col items-center">
+                                        <span class="bg-amber-100 text-amber-800 text-[10px] font-extrabold px-2.5 py-1 rounded-full border border-amber-300 shadow-sm mb-1">
+                                            ⭐ DESTACADO
+                                        </span>
+                                        <span class="text-[9px] text-gray-400 block mb-1">Hasta {{ product.featured_until|date:"d/m" }}</span>
+                                        <a href="{% url 'toggle_featured' product.id %}" class="text-[10px] text-gray-500 hover:text-amber-700 underline font-medium">
+                                            Desactivar
+                                        </a>
+                                    </div>
+                                {% else %}
+                                    <a href="{% url 'toggle_featured' product.id %}" class="inline-block bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-3 py-1.5 rounded-lg shadow-sm transition hover:scale-105">
+                                        ⭐ Destacar 7 días
+                                    </a>
+                                {% endif %}
+                            </td>
+
+                            <!-- Acciones: Editar y Eliminar Producto -->
+                            <td class="p-4 text-center">
+                                <div class="flex items-center justify-center gap-1.5">
+                                    <a href="{% url 'edit_product' product.id %}" class="inline-block bg-blue-500 hover:bg-blue-600 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg shadow-sm transition">
+                                        ✏️ Editar
+                                    </a>
+                                    
+                                    <form action="{% url 'delete_product' product.id %}" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este producto permanentemente?');" class="inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="inline-block bg-red-500 hover:bg-red-600 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg shadow-sm transition">
+                                            🗑️ Eliminar
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="7" class="p-8 text-center text-gray-400">
-                                No tienes productos registrados todavía. ¡Publica uno para comenzar a crear Ofertas Relámpago!
+                            <td colspan="9" class="p-8 text-center text-gray-400">
+                                No tienes productos registrados todavía. ¡Publica uno para comenzar a crear Ofertas Relámpago o destacar piezas!
                             </td>
                         </tr>
                         {% endfor %}

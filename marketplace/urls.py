@@ -27,4 +27,14 @@ urlpatterns = [
     path('product/<int:product_id>/', views.product_detail_view, name='product_detail'),
 
     path('business/<int:business_id>/', views.business_profile_view, name='business_profile'),   
+
+    path('dashboard/deactivate/', views.deactivate_business_view, name='deactivate_business'),
+
+    path('dashboard/product/<int:product_id>/delete/', views.delete_product_view, name='delete_product'),
+    
+    path('dashboard/product/<int:product_id>/toggle-stock/', views.toggle_stock_view, name='toggle_stock'),
+    path('dashboard/edit-profile/', views.edit_business_profile_view, name='edit_business_profile'),
+
+    path('product/<int:product_id>/toggle-featured/', views.toggle_featured_view, name='toggle_featured'),
 ]
+

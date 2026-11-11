@@ -29,16 +29,18 @@ class Business(models.Model):
     # Nuevos campos para diferenciar si es local establecido o entregas puntuales
     business_type = models.CharField(max_length=20, choices=BUSINESS_TYPE_CHOICES, default='fisico')
     delivery_zones = models.TextField(blank=True, null=True, help_text="Específica dónde entregas si no tienes local fijo")
+    
+    # Indicador para desactivar el negocio sin borrarlo físicamente
+    is_active = models.BooleanField(default=True, verbose_name="¿Empresa Activa?")
 
     def __str__(self):
-        return self.name  # Muestra el nombre del negocio en el panel de administración
-
+        return self.name
 
 # ==========================================
 # MODELO DE PRODUCTOS
 # ==========================================
 class Product(models.Model):
-    # Categorías completas (Estilo Mercado Libre + Comida + las que ya tenías)
+    # Categorías completas (Estilo Mercado Libre + Comida)
     CATEGORY_CHOICES = [
         ('comida', 'Comida y Antojitos'),
         ('vehiculos', 'Vehículos'),
@@ -56,7 +58,7 @@ class Product(models.Model):
         ('otro', 'Otro'),
     ]
 
-    # ¡NUEVO! Condición de la pieza
+    # Condición de la pieza
     CONDITION_CHOICES = [
         ('nuevo', 'Nuevo'),
         ('usado', 'De uso / Seminuevo'),
@@ -70,9 +72,12 @@ class Product(models.Model):
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     
-    # ¡NUEVO! Campo para guardar la condición (por defecto será Nuevo)
+    # Campo para guardar la condición (por defecto será Nuevo)
     condition = models.CharField(max_length=20, choices=CONDITION_CHOICES, default='nuevo')
     
+    # 🛡️ NUEVO CAMPO: Garantía del Producto (ej. "30 días de garantía directo en tienda")
+    warranty = models.CharField(max_length=255, blank=True, null=True, verbose_name="Garantía del producto", help_text="Ej. Sin garantía, 30 días con el vendedor, etc.")
+
     # Control de ofertas y promociones generales
     is_promo = models.BooleanField(default=False)
     promo_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
@@ -82,14 +87,21 @@ class Product(models.Model):
     express_promo_start = models.DateTimeField(null=True, blank=True)
     express_promo_end = models.DateTimeField(null=True, blank=True)
     
+    # Control de Destacado Semanal (Patrocinado / 7 días)
+    is_featured = models.BooleanField(default=False, verbose_name="¿Producto Destacado?")
+    featured_until = models.DateTimeField(null=True, blank=True, verbose_name="Destacado Hasta")
+
     # Archivo de imagen del producto y asignación de categoría
     image = models.ImageField(upload_to='products/', null=True, blank=True)
     
-    # ¡NUEVO! Imágenes adicionales 2 y 3
+    # Imágenes adicionales 2 y 3
     image_2 = models.ImageField(upload_to='products/', null=True, blank=True)
     image_3 = models.ImageField(upload_to='products/', null=True, blank=True)
     
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='otro')
+
+    # Control de stock / disponibilidad (Disponible / Agotado)
+    is_available = models.BooleanField(default=True, verbose_name="Disponible en stock")
 
     def __str__(self):
         return self.name
@@ -107,6 +119,28 @@ class Product(models.Model):
         self.express_promo_start = timezone.now()
         self.express_promo_end = timezone.now() + timedelta(hours=hours)
         self.save()
+
+    @property
+    def is_featured_active(self):
+        """Verifica automáticamente si la suscripción de destacado por 7 días sigue vigente."""
+        if self.is_featured and self.featured_until:
+            return timezone.now() <= self.featured_until
+        return False
+
+    def activate_featured_promo(self, days=7):
+        """Activa la suscripción destacada por una semana (7 días)."""
+        self.is_featured = True
+        self.featured_until = timezone.now() + timedelta(days=days)
+        self.save()
+
+    @property
+    def discount_percentage(self):
+        """Calcula automáticamente el porcentaje de descuento cuando hay un precio de oferta."""
+        if self.promo_price and self.price and self.price > 0 and self.promo_price < self.price:
+            discount = ((self.price - self.promo_price) / self.price) * 100
+            return round(discount)
+        return 0
+    
 # ==========================================
 # MODELO DE RESEÑAS Y VALORACIONES
 # ==========================================

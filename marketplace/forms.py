@@ -102,13 +102,13 @@ class BusinessForm(forms.ModelForm):
 
 
 # ==========================================
-# 3. FORMULARIO DE PRODUCTOS
+# 3. FORMULARIO DE PRODUCTOS (ACTUALIZADO CON GARANTÍA)
 # ==========================================
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
         fields = [
-            'business', 'name', 'description', 'price', 
+            'business', 'name', 'description', 'warranty', 'price',  # 🛡️ Añadido warranty aquí
             'condition', 'is_promo', 'promo_price', 
             'image', 'image_2', 'image_3', 'category'
         ]
@@ -116,6 +116,7 @@ class ProductForm(forms.ModelForm):
             'business': forms.Select(attrs={'class': 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'}),
             'name': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'}),
             'description': forms.Textarea(attrs={'class': 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500', 'rows': 3}),
+            'warranty': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500', 'placeholder': 'Ej. 30 días de garantía con el vendedor'}), # 🛡️ Estilo para garantía
             'price': forms.NumberInput(attrs={'class': 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500', 'step': 'any'}),
             'condition': forms.Select(attrs={'class': 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'}),
             'is_promo': forms.CheckboxInput(attrs={'class': 'h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'}),

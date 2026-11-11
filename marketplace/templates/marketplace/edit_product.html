@@ -11,7 +11,7 @@
         <div class="flex justify-between items-center mb-6">
             <div>
                 <h1 class="text-xl font-bold text-gray-800">✏️ Editar Producto</h1>
-                <p class="text-xs text-gray-500 mt-0.5">Modifica los detalles, condición o fotografías de tu artículo.</p>
+                <p class="text-xs text-gray-500 mt-0.5">Modifica los detalles, condición, stock, garantía o fotografías de tu artículo.</p>
             </div>
             <a href="{% url 'business_dashboard' %}" class="text-xs text-gray-500 hover:text-gray-800 font-semibold whitespace-nowrap">← Volver al Panel</a>
         </div>
@@ -34,6 +34,13 @@
             <div>
                 <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Descripción:</label>
                 {{ form.description }}
+            </div>
+
+            <!-- 🛡️ NUEVO APARTADO: GARANTÍA DEL PRODUCTO -->
+            <div>
+                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Garantía del Producto:</label>
+                {{ form.warranty }}
+                <span class="text-[10px] text-gray-400 mt-0.5 block">Ej. 30 días de garantía directo con el vendedor, sin garantía, etc.</span>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -63,6 +70,18 @@
             <div>
                 <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Precio con Descuento (Opcional):</label>
                 {{ form.promo_price }}
+            </div>
+
+            <!-- Control de Stock / Disponibilidad en el formulario de edición -->
+            <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200 flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-bold text-emerald-900 uppercase block">Disponibilidad en Inventario</span>
+                    <span class="text-[10px] text-emerald-700">Si se agota, puedes ocultarlo temporalmente sin borrarlo.</span>
+                </div>
+                <label class="flex items-center space-x-2 cursor-pointer">
+                    {{ form.is_available }}
+                    <span class="text-xs font-bold text-emerald-800 uppercase">Disponible</span>
+                </label>
             </div>
 
             <!-- APARTADO DE LAS 3 FOTOGRAFÍAS -->

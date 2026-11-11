@@ -1,6 +1,5 @@
 import json
 from django.contrib.auth.decorators import login_required
-# Añadimos get_user_model para poder consultar el modelo de usuarios dinámicamente
 from django.contrib.auth import login, authenticate, logout, get_user_model
 from django.contrib.auth.forms import AuthenticationForm
 from django.shortcuts import render, redirect, get_object_or_404
@@ -10,7 +9,6 @@ from math import radians, sin, cos, sqrt, atan2
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.contrib import messages
-
 
 # Modelos y Formularios del sistema
 from .models import Product, Business, Review
@@ -73,7 +71,11 @@ def nearby_products_view(request):
     # CASO 1: EL USUARIO FILTRÓ POR CATEGORÍA
     # ==========================================
     if selected_category:
-        filtered_products = Product.objects.select_related('business').filter(category=selected_category)
+        filtered_products = Product.objects.select_related('business').filter(
+            category=selected_category, 
+            business__is_active=True,
+            is_available=True  # Oculta agotados
+        )
 
         for product in filtered_products:
             b = product.business
@@ -94,7 +96,9 @@ def nearby_products_view(request):
         filtered_products = Product.objects.select_related('business').filter(
             Q(name__icontains=query) | 
             Q(description__icontains=query) | 
-            Q(business__name__icontains=query)
+            Q(business__name__icontains=query),
+            business__is_active=True,
+            is_available=True  # Oculta agotados
         )
 
         for product in filtered_products:
@@ -113,7 +117,10 @@ def nearby_products_view(request):
     # CASO 3: VISTA NORMAL POR CERCANÍA (SIN FILTROS)
     # ==========================================
     else:
-        all_products = Product.objects.select_related('business').all()
+        all_products = Product.objects.select_related('business').filter(
+            business__is_active=True,
+            is_available=True  # Oculta agotados
+        )
 
         for product in all_products:
             b = product.business
@@ -129,8 +136,11 @@ def nearby_products_view(request):
                         'lat': b.latitude, 'lng': b.longitude, 'whatsapp': b.whatsapp
                     }
 
-    # Ordenamos los resultados por cercanía
-    nearby_items = sorted(nearby_items, key=lambda x: x.distance_km)
+    # Ordenamos: Primero los productos destacados activos (is_featured_active), y después por cercanía (distance_km)
+    nearby_items = sorted(
+        nearby_items, 
+        key=lambda x: (not x.is_featured_active, x.distance_km)
+    )
 
     # ==========================================
     # CARGAR PROMOCIONES EXPRÉS ACTIVAS (24 HORAS)
@@ -138,7 +148,9 @@ def nearby_products_view(request):
     express_promos = []
     active_express_products = Product.objects.select_related('business').filter(
         is_express_promo=True,
-        express_promo_end__gt=timezone.now()
+        express_promo_end__gt=timezone.now(),
+        business__is_active=True,
+        is_available=True  # Oculta agotados en carrusel
     )
 
     for prod in active_express_products:
@@ -159,7 +171,6 @@ def nearby_products_view(request):
         'businesses_json': json.dumps(list(businesses_dict.values())),
     }
     return render(request, 'marketplace/index.html', context)
-
 # ==========================================
 # VISTA DE REGISTRO DE NUEVA EMPRESA
 # ==========================================
@@ -244,30 +255,6 @@ def business_login_view(request):
 def business_logout_view(request):
     logout(request)
     return redirect('home')
-
-# ==========================================
-# PANEL DE ADMINISTRACIÓN DEL NEGOCIO
-# ==========================================
-@login_required(login_url='business_login')
-def business_dashboard_view(request):
-    try:
-        business = request.user.business
-    except Business.DoesNotExist:
-        return redirect('register_business')
-    
-    products = Product.objects.filter(business=business)
-    
-    active_express_count = products.filter(
-        is_express_promo=True,
-        express_promo_end__gt=timezone.now()
-    ).count()
-    
-    context = {
-        'business': business,
-        'products': products,
-        'active_express_count': active_express_count,
-    }
-    return render(request, 'marketplace/dashboard.html', context)
 
 # ==========================================
 # VISTA PARA AGREGAR RESEÑAS A PRODUCTOS
@@ -386,22 +373,24 @@ def edit_product_view(request, product_id):
             return redirect('business_dashboard')
     else:
         form = ProductForm(instance=product)
-        # Ocultamos o restringimos el selector de negocio al propio negocio logueado
         form.fields['business'].queryset = Business.objects.filter(id=business.id)
 
     return render(request, 'marketplace/edit_product.html', {'form': form, 'product': product})
 
 # ==========================================
-# VISTA DE DETALLE DEL PRODUCTO (GALERÍA 3 FOTOS)
+# VISTA DE DETALLE DEL PRODUCTO
 # ==========================================
 def product_detail_view(request, product_id):
-    """Muestra la página de detalle de un producto con sus hasta 3 fotografías y condición."""
+    """Muestra la página de detalle de un producto con sus fotografías y condición."""
     DEFAULT_LAT = 19.0413
     DEFAULT_LNG = -98.2062
     
     product = get_object_or_404(Product.objects.select_related('business'), id=product_id)
     
-    # Calculamos la distancia al negocio
+    # Si la empresa está inactiva o el producto no está disponible, bloquear acceso público
+    if not product.business.is_active or not product.is_available:
+        return redirect('home')
+
     b = product.business
     lat_param = request.GET.get('lat', DEFAULT_LAT)
     lng_param = request.GET.get('lng', DEFAULT_LNG)
@@ -417,19 +406,19 @@ def product_detail_view(request, product_id):
 
     return render(request, 'marketplace/product_detail.html', {'product': product})
 
-
+# ==========================================
+# VISTA DE PERFIL PÚBLICO DEL NEGOCIO
+# ==========================================
 def business_profile_view(request, business_id):
-    """Muestra el perfil público de un negocio y todos sus productos activos."""
+    """Muestra el perfil público de un negocio activo y sus productos disponibles."""
     DEFAULT_LAT = 19.0413
     DEFAULT_LNG = -98.2062
     
-    # Obtenemos el negocio o error 404 si no existe
-    business = get_object_or_404(Business, id=business_id)
+    business = get_object_or_404(Business, id=business_id, is_active=True)
     
-    # Obtenemos todos los productos de este negocio específico
-    products = Product.objects.filter(business=business).order_by('-id')
+    # Solo muestra productos disponibles para los clientes públicos
+    products = Product.objects.filter(business=business, is_available=True).order_by('-id')
     
-    # Calculamos la distancia respecto al usuario
     lat_param = request.GET.get('lat', DEFAULT_LAT)
     lng_param = request.GET.get('lng', DEFAULT_LNG)
     try:
@@ -442,7 +431,6 @@ def business_profile_view(request, business_id):
     distance = calculate_distance(user_lat, user_lng, business.latitude, business.longitude)
     business.distance_km = round(distance, 1)
     
-    # Asignamos la distancia a cada producto para mantener la coherencia visual
     for p in products:
         p.distance_km = business.distance_km
 
@@ -453,3 +441,131 @@ def business_profile_view(request, business_id):
         'user_lng': user_lng,
     }
     return render(request, 'marketplace/business_profile.html', context)
+
+# ==========================================
+# DESACTIVAR CUENTA DESDE EL PANEL DEL NEGOCIO
+# ==========================================
+@login_required(login_url='business_login')
+def deactivate_business_view(request):
+    """Permite al dueño del negocio desactivar su cuenta (soft delete) él mismo."""
+    if request.method == 'POST':
+        try:
+            business = request.user.business
+            business.is_active = False
+            business.save()
+            logout(request)
+            messages.success(request, "Tu cuenta ha sido desactivada correctamente. Esperamos verte pronto.")
+        except Business.DoesNotExist:
+            pass
+    return redirect('home')
+
+# ==========================================
+# VISTA PARA ELIMINAR UN PRODUCTO
+# ==========================================
+@login_required(login_url='business_login')
+def delete_product_view(request, product_id):
+    """Permite al comerciante eliminar un producto de su catálogo."""
+    business = request.user.business
+    product = get_object_or_404(Product, id=product_id, business=business)
+    
+    if request.method == 'POST':
+        product_name = product.name
+        product.delete()
+        messages.success(request, f"🗑️ El producto '{product_name}' ha sido eliminado correctamente.")
+        
+    return redirect('business_dashboard')
+
+# ==========================================
+# PANEL DE ADMINISTRACIÓN DEL NEGOCIO
+# ==========================================
+@login_required(login_url='business_login')
+def business_dashboard_view(request):
+    try:
+        business = request.user.business
+    except Business.DoesNotExist:
+        return redirect('register_business')
+    
+    products = Product.objects.filter(business=business)
+    
+    total_products_count = products.count()
+    active_express_count = products.filter(
+        is_express_promo=True,
+        express_promo_end__gt=timezone.now()
+    ).count()
+    
+    promo_prices_count = sum(1 for p in products if p.promo_price is not None and str(p.promo_price).strip() != '')
+    
+    context = {
+        'business': business,
+        'products': products,
+        'active_express_count': active_express_count,
+        'total_products_count': total_products_count,
+        'promo_prices_count': promo_prices_count,
+    }
+    return render(request, 'marketplace/dashboard.html', context)
+
+# ==========================================
+# ALTERNAR ESTADO DE STOCK (DISPONIBLE / AGOTADO)
+# ==========================================
+@login_required(login_url='business_login')
+def toggle_stock_view(request, product_id):
+    """Permite al comerciante alternar entre disponible y agotado."""
+    business = request.user.business
+    product = get_object_or_404(Product, id=product_id, business=business)
+    
+    product.is_available = not product.is_available
+    product.save()
+    
+    if product.is_available:
+        messages.success(request, f"✅ El producto '{product.name}' ahora está marcado como Disponible.")
+    else:
+        messages.warning(request, f"📦 El producto '{product.name}' ha sido marcado como Agotado (oculto temporalmente).")
+        
+    return redirect('business_dashboard')
+
+# ==========================================
+# VISTA PARA EDITAR EL PERFIL DEL NEGOCIO
+# ==========================================
+@login_required(login_url='business_login')
+def edit_business_profile_view(request):
+    """Permite al comerciante editar los datos de su negocio desde el panel."""
+    business = get_object_or_404(Business, user=request.user)
+
+    if request.method == 'POST':
+        form = BusinessForm(request.POST, instance=business)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "✨ ¡Los datos de tu negocio han sido actualizados con éxito!")
+            return redirect('business_dashboard')
+        else:
+            messages.error(request, "⚠️ Por favor corrige los errores en el formulario.")
+    else:
+        form = BusinessForm(instance=business)
+
+    context = {
+        'form': form,
+        'business': business,
+    }
+    return render(request, 'marketplace/edit_business.html', context)
+
+# ==========================================
+# ACTIVAR / DESACTIVAR DESTACADO SEMANAL (7 DÍAS)
+# ==========================================
+@login_required(login_url='business_login')
+def toggle_featured_view(request, product_id):
+    """Permite al comerciante activar o desactivar la presencia destacada por 7 días."""
+    business = request.user.business
+    product = get_object_or_404(Product, id=product_id, business=business)
+
+    if not product.is_featured_active:
+        # Activa por 7 días exactos
+        product.activate_featured_promo(days=7)
+        messages.success(request, f"⭐ ¡'{product.name}' ahora es un Producto Destacado por 7 días!")
+    else:
+        # Desactiva el paquete si ya estaba activo
+        product.is_featured = False
+        product.featured_until = None
+        product.save()
+        messages.info(request, f"Se ha desactivado el estatus de destacado para '{product.name}'.")
+
+    return redirect('business_dashboard')
