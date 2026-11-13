@@ -246,6 +246,27 @@
                             {% endif %}
                         </div>
 
+                        <!-- 🕒 ESTADO DE HORARIO (Abierto / Cerrado) -->
+                        <div class="flex items-center gap-1.5 mb-2">
+                            {% if product.business.is_open_now is True %}
+                                <span class="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                                    Abierto ahora
+                                </span>
+                            {% elif product.business.is_open_now is False %}
+                                <span class="inline-flex items-center gap-1 text-[10px] font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                    Cerrado
+                                </span>
+                            {% endif %}
+
+                            {% if product.business.opening_time and product.business.closing_time %}
+                                <span class="text-[10px] text-gray-400">
+                                    ({{ product.business.opening_time|time:"H:i" }} - {{ product.business.closing_time|time:"H:i" }})
+                                </span>
+                            {% endif %}
+                        </div>
+
                         <!-- Título -->
                         <a href="{% url 'product_detail' product.id %}" class="font-bold text-gray-900 text-lg mt-1 leading-tight hover:text-blue-600 transition block">
                             {{ product.name }}

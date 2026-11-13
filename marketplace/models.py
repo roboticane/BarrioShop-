@@ -30,11 +30,35 @@ class Business(models.Model):
     business_type = models.CharField(max_length=20, choices=BUSINESS_TYPE_CHOICES, default='fisico')
     delivery_zones = models.TextField(blank=True, null=True, help_text="Específica dónde entregas si no tienes local fijo")
     
+    # 🕒 NUEVOS CAMPOS DE HORARIO DE ATENCIÓN
+    opening_time = models.TimeField(null=True, blank=True, verbose_name="Hora de apertura")
+    closing_time = models.TimeField(null=True, blank=True, verbose_name="Hora de cierre")
+
     # Indicador para desactivar el negocio sin borrarlo físicamente
     is_active = models.BooleanField(default=True, verbose_name="¿Empresa Activa?")
 
     def __str__(self):
         return self.name
+
+    @property
+    def is_open_now(self):
+        """
+        Calcula automáticamente si el negocio está abierto en este momento.
+        Retorna: True (Abierto), False (Cerrado), o None (Si no configuró horario).
+        """
+        if not self.opening_time or not self.closing_time:
+            return None
+
+        now = timezone.localtime().time()
+
+        # Caso 1: Horario normal en el mismo día (ej. 09:00 a 20:00)
+        if self.opening_time <= self.closing_time:
+            return self.opening_time <= now <= self.closing_time
+        
+        # Caso 2: Horario nocturno que cruza la medianoche (ej. 18:00 a 02:00)
+        else:
+            return now >= self.opening_time or now <= self.closing_time
+
 
 # ==========================================
 # MODELO DE PRODUCTOS
@@ -75,7 +99,7 @@ class Product(models.Model):
     # Campo para guardar la condición (por defecto será Nuevo)
     condition = models.CharField(max_length=20, choices=CONDITION_CHOICES, default='nuevo')
     
-    # 🛡️ NUEVO CAMPO: Garantía del Producto (ej. "30 días de garantía directo en tienda")
+    # 🛡️ Garantía del Producto
     warranty = models.CharField(max_length=255, blank=True, null=True, verbose_name="Garantía del producto", help_text="Ej. Sin garantía, 30 días con el vendedor, etc.")
 
     # Control de ofertas y promociones generales
