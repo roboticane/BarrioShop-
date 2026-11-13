@@ -10,8 +10,8 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.contrib import messages
 
-# Modelos y Formularios del sistema
-from .models import Product, Business, Review
+# Modelos y Formularios del sistema (Incluyendo Favorite)
+from .models import Product, Business, Review, Favorite
 from .forms import BusinessForm, BusinessRegistrationForm, ProductForm, ReviewForm
 
 # ==========================================
@@ -135,6 +135,10 @@ def nearby_products_view(request):
             prod.distance_km = round(distance, 1)
             express_promos.append(prod)
 
+    user_favorite_ids = []
+    if request.user.is_authenticated:
+        user_favorite_ids = list(Favorite.objects.filter(user=request.user).values_list('product_id', flat=True))
+
     context = {
         'products': nearby_items,
         'query': query,
@@ -143,6 +147,7 @@ def nearby_products_view(request):
         'user_lat': user_lat,
         'user_lng': user_lng,
         'businesses_json': json.dumps(list(businesses_dict.values())),
+        'user_favorite_ids': user_favorite_ids,
     }
     return render(request, 'marketplace/index.html', context)
 
@@ -389,7 +394,7 @@ def product_detail_view(request, product_id):
 
 
 # ==========================================
-# VISTA DE PERFIL PÚBLICO DEL NEGOCIO
+# VISTA DE PERFIL PÚBLICO DEL NEGOCIO (Actualizada con Favoritos)
 # ==========================================
 def business_profile_view(request, business_id):
     DEFAULT_LAT = 19.0413
@@ -413,11 +418,17 @@ def business_profile_view(request, business_id):
     for p in products:
         p.distance_km = business.distance_km
 
+    # 🌟 Obtener los favoritos del usuario autenticado para el perfil
+    user_favorite_ids = []
+    if request.user.is_authenticated:
+        user_favorite_ids = list(Favorite.objects.filter(user=request.user).values_list('product_id', flat=True))
+
     context = {
         'business': business,
         'products': products,
         'user_lat': user_lat,
         'user_lng': user_lng,
+        'user_favorite_ids': user_favorite_ids, # 👈 Agregado al context
     }
     return render(request, 'marketplace/business_profile.html', context)
 
@@ -547,3 +558,53 @@ def toggle_featured_view(request, product_id):
         messages.info(request, f"Se desactivó el destacado para '{product.name}'.")
 
     return redirect('dashboard')
+
+
+# ==========================================
+# VISTAS DE AUTENTICACIÓN Y GESTIÓN DE FAVORITOS (CLIENTES)
+# ==========================================
+def customer_register_view(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            next_url = request.GET.get('next') or 'my_favorites'
+            return redirect(next_url)
+    else:
+        form = UserCreationForm()
+    return render(request, 'marketplace/customer_auth.html', {'form': form, 'is_register': True})
+
+def customer_login_view(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+            login(request, user)
+            next_url = request.GET.get('next') or 'my_favorites'
+            return redirect(next_url)
+    else:
+        form = AuthenticationForm()
+    return render(request, 'marketplace/customer_auth.html', {'form': form, 'is_register': False})
+
+def customer_logout_view(request):
+    logout(request)
+    return redirect('home')
+
+@login_required(login_url='customer_login')
+def toggle_favorite_view(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    favorite, created = Favorite.objects.get_or_create(user=request.user, product=product)
+    
+    if not created:
+        favorite.delete()
+        messages.info(request, f"Se quitó '{product.name}' de tus favoritos.")
+    else:
+        messages.success(request, f"❤️ ¡Guardaste '{product.name}' en tus favoritos!")
+        
+    return redirect(request.META.get('HTTP_REFERER', 'home'))
+
+@login_required(login_url='customer_login')
+def my_favorites_view(request):
+    favorites = Favorite.objects.filter(user=request.user).select_related('product', 'product__business')
+    return render(request, 'marketplace/my_favorites.html', {'favorites': favorites})

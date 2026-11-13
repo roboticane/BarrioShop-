@@ -33,9 +33,32 @@
                         <span class="text-xs bg-amber-100 text-amber-800 font-bold px-2.5 py-0.5 rounded-full">🚚 {{ business.get_business_type_display }}</span>
                     {% endif %}
                 </div>
+                
                 <p class="text-xs text-gray-500">📍 Dirección: {{ business.address }} (A {{ business.distance_km }} km de ti)</p>
+                
                 {% if business.delivery_zones %}
                     <p class="text-xs text-amber-700 font-medium mt-1">📍 Puntos de entrega: {{ business.delivery_zones }}</p>
+                {% endif %}
+
+                <!-- HORARIO DE ATENCIÓN Y ESTATUS EN VIVO -->
+                {% if business.opening_time and business.closing_time %}
+                <div class="mt-2.5 flex flex-wrap items-center gap-2 text-xs">
+                    {% if business.is_open_now %}
+                        <span class="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Abierto ahora
+                        </span>
+                    {% else %}
+                        <span class="inline-flex items-center gap-1.5 bg-red-100 text-red-800 font-bold px-2.5 py-0.5 rounded-full">
+                            <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                            Cerrado por el momento
+                        </span>
+                    {% endif %}
+                    
+                    <span class="text-gray-600 font-medium">
+                        🕒 Horario: <strong>{{ business.opening_time|time:"H:i" }} - {{ business.closing_time|time:"H:i" }} hrs</strong>
+                    </span>
+                </div>
                 {% endif %}
             </div>
 
@@ -96,11 +119,18 @@
                     </div>
                 </div>
                 
-                <div class="p-4 bg-gray-50 border-t border-gray-100">
-                    <a href="https://wa.me/52{{ product.business.whatsapp }}?text=Hola,%20me%20interesa%20el%20producto%20*{{ product.name }}*%20que%20vi%20en%20BarrioShop." 
+                <!-- Botón de WhatsApp y Favorito -->
+                <div class="p-4 bg-gray-50 border-t border-gray-100 flex items-center gap-2">
+                    <a href="https://wa.me/52{{ product.business.whatsapp }}?text=Hola,%20me%20interesa%20el%20producto%20*{{ product.name }}*%2520que%20vi%20en%20BarrioShop." 
                        target="_blank" 
-                       class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition shadow-sm">
-                        💬 Contactar por WhatsApp
+                       class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition shadow-sm">
+                        💬 WhatsApp
+                    </a>
+
+                    <a href="{% url 'toggle_favorite' product.id %}" 
+                       class="p-2 rounded-lg border transition shadow-sm flex items-center justify-center {% if product.id in user_favorite_ids %}bg-red-50 border-red-300 text-red-600{% else %}bg-white border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200{% endif %}"
+                       title="Guardar para después">
+                        {% if product.id in user_favorite_ids %}❤️{% else %}🤍{% endif %}
                     </a>
                 </div>
             </div>

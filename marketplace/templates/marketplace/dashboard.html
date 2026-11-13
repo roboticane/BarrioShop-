@@ -123,7 +123,7 @@
                         {% for product in products %}
                         <tr class="hover:bg-gray-50/50 transition">
                             
-                            <!-- Producto e Imagen -->
+                            <!-- Producto e Imagen con Contador de Favoritos -->
                             <td class="p-4 font-semibold flex items-center gap-3">
                                 {% if product.image %}
                                     <img src="{{ product.image.url }}" class="w-10 h-10 object-cover rounded-lg shadow-sm">
@@ -133,6 +133,11 @@
                                 <div>
                                     <span class="font-bold text-gray-800 block">{{ product.name }}</span>
                                     <span class="text-[10px] text-gray-400 truncate max-w-[180px] block">{{ product.description }}</span>
+                                    
+                                    <!-- 🌟 Contador de Favoritos -->
+                                    <span class="inline-flex items-center gap-1 mt-1 text-[11px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full border border-red-100">
+                                        ❤️ {{ product.favorited_by.count }} favorito{{ product.favorited_by.count|pluralize }}
+                                    </span>
                                 </div>
                             </td>
 
@@ -193,7 +198,7 @@
                                 {% endif %}
                             </td>
 
-                            <!-- NUEVO: Botón Activar / Desactivar Destacado Semanal (7 Días) -->
+                            <!-- Botón Activar / Desactivar Destacado Semanal (7 Días) -->
                             <td class="p-4 text-center">
                                 {% if product.is_featured_active %}
                                     <div class="inline-flex flex-col items-center">

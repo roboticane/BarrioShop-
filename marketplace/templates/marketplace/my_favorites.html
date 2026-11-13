@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Favoritos - BarrioShop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans pb-12">
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="{% url 'home' %}" class="text-xl font-black text-gray-900">🛒 BarrioShop</a>
+            <div class="flex items-center gap-4">
+                <a href="{% url 'home' %}" class="text-xs font-semibold text-blue-600 hover:underline">← Seguir explorando</a>
+                <a href="{% url 'customer_logout' %}" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-1.5 rounded-lg font-semibold">Cerrar sesión</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <div class="mb-6">
+            <h1 class="text-2xl font-black text-gray-900">❤️ Mis Productos Guardados ({{ favorites|length }})</h1>
+            <p class="text-xs text-gray-500 mt-1">Aquí tienes los artículos que guardaste para comprar más adelante.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {% for fav in favorites %}
+            <div class="bg-white rounded-xl shadow-md overflow-hidden flex flex-col justify-between border border-gray-100">
+                <div>
+                    <div class="relative h-44 bg-gray-50 flex items-center justify-center p-3">
+                        <a href="{% url 'product_detail' fav.product.id %}" class="w-full h-full flex items-center justify-center">
+                            {% if fav.product.image %}
+                                <img src="{{ fav.product.image.url }}" alt="{{ fav.product.name }}" class="max-w-full max-h-full object-contain">
+                            {% else %}
+                                <span class="text-gray-400 text-xs">Sin imagen</span>
+                            {% endif %}
+                        </a>
+                        <a href="{% url 'toggle_favorite' fav.product.id %}" class="absolute top-2 right-2 bg-white/90 hover:bg-red-50 text-red-600 text-xs font-bold px-2 py-1 rounded-full shadow-sm border border-gray-200" title="Quitar de favoritos">
+                            ✕ Quitar
+                        </a>
+                    </div>
+                    <div class="p-4">
+                        <a href="{% url 'business_profile' fav.product.business.id %}" class="text-[11px] font-bold text-blue-600 uppercase hover:underline">
+                            {{ fav.product.business.name }}
+                        </a>
+                        <a href="{% url 'product_detail' fav.product.id %}" class="font-bold text-gray-900 text-base mt-1 block hover:text-blue-600">
+                            {{ fav.product.name }}
+                        </a>
+                        <div class="mt-2 flex items-baseline gap-2">
+                            {% if fav.product.is_promo and fav.product.promo_price %}
+                                <span class="text-red-600 font-extrabold text-lg">${{ fav.product.promo_price }}</span>
+                                <span class="text-gray-400 line-through text-xs">${{ fav.product.price }}</span>
+                            {% else %}
+                                <span class="text-gray-900 font-extrabold text-lg">${{ fav.product.price }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4 bg-gray-50 border-t border-gray-100">
+                    <a href="https://wa.me/52{{ fav.product.business.whatsapp }}?text=Hola,%20guardé%20su%20producto%20*{{ fav.product.name }}*%20en%20BarrioShop%20y%20ya%20me%20interesa%20comprarlo." 
+                       target="_blank" 
+                       class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 px-4 rounded-lg flex items-center justify-center gap-1.5 transition">
+                        💬 Comprar por WhatsApp
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-full bg-white rounded-2xl p-12 text-center shadow-sm">
+                <p class="text-4xl mb-3">🤍</p>
+                <h3 class="text-lg font-bold text-gray-700">Aún no tienes productos favoritos</h3>
+                <p class="text-xs text-gray-500 mt-1 mb-4">Dale clic al corazón en cualquier producto que te guste para guardarlo aquí.</p>
+                <a href="{% url 'home' %}" class="inline-block bg-blue-600 text-white text-xs font-bold px-5 py-2.5 rounded-xl">Explorar productos</a>
+            </div>
+            {% endfor %}
+        </div>
+    </main>
+</body>
+</html>

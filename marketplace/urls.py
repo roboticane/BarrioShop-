@@ -36,4 +36,11 @@ urlpatterns = [
     path('dashboard/edit-profile/', views.edit_business_profile_view, name='edit_business_profile'),
 
     path('product/<int:product_id>/toggle-featured/', views.toggle_featured_view, name='toggle_featured'),
+
+    # Favoritos y Clientes
+    path('favorite/<int:product_id>/toggle/', views.toggle_favorite_view, name='toggle_favorite'),
+    path('mis-favoritos/', views.my_favorites_view, name='my_favorites'),
+    path('cliente/registro/', views.customer_register_view, name='customer_register'),
+    path('cliente/entrar/', views.customer_login_view, name='customer_login'),
+    path('cliente/salir/', views.customer_logout_view, name='customer_logout'),
 ]

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if is_register %}Crear Cuenta{% else %}Iniciar Sesión{% endif %} - BarrioShop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4 font-sans">
+    <div class="max-w-md w-full bg-white rounded-2xl shadow-md p-8 border border-gray-100">
+        <div class="text-center mb-6">
+            <span class="text-3xl">❤️</span>
+            <h1 class="text-xl font-black text-gray-900 mt-2">
+                {% if is_register %}Crea tu cuenta de Comprador{% else %}Inicia sesión en BarrioShop{% endif %}
+            </h1>
+            <p class="text-xs text-gray-500 mt-1">Guarda tus productos favoritos y revisa cuando bajen de precio.</p>
+        </div>
+
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            {% for field in form %}
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">{{ field.label }}</label>
+                    <input type="{{ field.field.widget.input_type }}" name="{{ field.name }}" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    {% for error in field.errors %}
+                        <p class="text-xs text-red-600 mt-1">{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-xl text-sm transition shadow-sm">
+                {% if is_register %}Registrarme y Guardar{% else %}Entrar{% endif %}
+            </button>
+        </form>
+
+        <div class="mt-6 pt-4 border-t text-center text-xs text-gray-600">
+            {% if is_register %}
+                ¿Ya tienes cuenta? <a href="{% url 'customer_login' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}" class="text-blue-600 font-bold hover:underline">Inicia sesión aquí</a>
+            {% else %}
+                ¿Aún no tienes cuenta? <a href="{% url 'customer_register' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}" class="text-blue-600 font-bold hover:underline">Regístrate gratis</a>
+            {% endif %}
+            <div class="mt-3">
+                <a href="{% url 'home' %}" class="text-gray-400 hover:text-gray-600">← Volver a la tienda</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
