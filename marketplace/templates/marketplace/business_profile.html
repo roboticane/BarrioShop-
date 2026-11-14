@@ -40,26 +40,33 @@
                     <p class="text-xs text-amber-700 font-medium mt-1">📍 Puntos de entrega: {{ business.delivery_zones }}</p>
                 {% endif %}
 
-                <!-- HORARIO DE ATENCIÓN Y ESTATUS EN VIVO -->
-                {% if business.opening_time and business.closing_time %}
+                <!-- HORARIO DE ATENCIÓN, DÍAS LABORALES Y ESTATUS EN VIVO -->
                 <div class="mt-2.5 flex flex-wrap items-center gap-2 text-xs">
-                    {% if business.is_open_now %}
-                        <span class="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            Abierto ahora
-                        </span>
-                    {% else %}
-                        <span class="inline-flex items-center gap-1.5 bg-red-100 text-red-800 font-bold px-2.5 py-0.5 rounded-full">
-                            <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                            Cerrado por el momento
-                        </span>
+                    {% if business.is_open_now is not None %}
+                        {% if business.is_open_now %}
+                            <span class="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                Abierto ahora
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center gap-1.5 bg-red-100 text-red-800 font-bold px-2.5 py-0.5 rounded-full">
+                                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                Cerrado por el momento
+                            </span>
+                        {% endif %}
                     {% endif %}
                     
-                    <span class="text-gray-600 font-medium">
-                        🕒 Horario: <strong>{{ business.opening_time|time:"H:i" }} - {{ business.closing_time|time:"H:i" }} hrs</strong>
+                    <!-- 🕒 HORARIO DINÁMICO DEL DÍA EN CURSO -->
+                    <span class="text-gray-600 font-medium bg-gray-50 px-2.5 py-1 rounded-full border border-gray-200">
+                        🕒 Horario de hoy: <strong>{{ business.today_hours_display }}</strong>
                     </span>
+
+                    {% if business.work_days %}
+                        <span class="bg-gray-100 text-gray-700 font-bold px-2.5 py-1 rounded-full border border-gray-200">
+                            📅 Días: {{ business.work_days }}
+                        </span>
+                    {% endif %}
                 </div>
-                {% endif %}
             </div>
 
             <a href="https://wa.me/52{{ business.whatsapp }}?text=Hola,%20visité%20su%20perfil%20en%20BarrioShop%20y%20me%20interesan%20sus%20productos." 
