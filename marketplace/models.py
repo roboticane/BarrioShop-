@@ -1,59 +1,62 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.utils.text import slugify
 from datetime import timedelta
 
 # ==========================================
 # MODELO DE NEGOCIOS / TIENDAS
 # ==========================================
 class Business(models.Model):
-    # Opciones disponibles para clasificar el modelo operativo del negocio
     BUSINESS_TYPE_CHOICES = [
         ('fisico', 'Local Físico / Tienda Establecida'),
         ('entrega', 'Entregas en Puntos / Puntos Medios'),
     ]
 
-    # Relación uno a uno con el usuario de Django para el acceso exclusivo al panel
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     
-    # Datos generales del comercio
-    name = models.CharField(max_length=100) # Nombre del negocio
-    description = models.TextField()        # Breve descripción de lo que venden u ofrecen
-    whatsapp = models.CharField(max_length=20) # Número de contacto para pedidos por WhatsApp
-    address = models.CharField(max_length=255) # Dirección física o referencia principal
+    name = models.CharField(max_length=100)
+    slug = models.SlugField(unique=True, blank=True, null=True, max_length=150)
+    description = models.TextField()
+    whatsapp = models.CharField(max_length=20)
+    address = models.CharField(max_length=255)
     
-    # Coordenadas geográficas para calcular la distancia y mostrarlos en el mapa interactivo
     latitude = models.FloatField()
     longitude = models.FloatField()
     
-    # Campos para diferenciar si es local establecido o entregas puntuales
     business_type = models.CharField(max_length=20, choices=BUSINESS_TYPE_CHOICES, default='fisico')
     delivery_zones = models.TextField(blank=True, null=True, help_text="Específica dónde entregas si no tienes local fijo")
     
-    # 📅 DÍAS LABORALES (Texto descriptivo general)
     work_days = models.CharField(max_length=150, default="Lunes a Sábado", blank=True, null=True, verbose_name="Días de labor / Atención")
 
-    # 🕒 HORARIO DE LUNES A VIERNES
     opening_time = models.TimeField(null=True, blank=True, verbose_name="Apertura (Lun - Vie)")
     closing_time = models.TimeField(null=True, blank=True, verbose_name="Cierre (Lun - Vie)")
 
-    # 🕒 HORARIO DE SÁBADO (Dejar vacío si no abren)
     saturday_opening_time = models.TimeField(null=True, blank=True, verbose_name="Apertura (Sábado)")
     saturday_closing_time = models.TimeField(null=True, blank=True, verbose_name="Cierre (Sábado)")
 
-    # 🕒 HORARIO DE DOMINGO (Dejar vacío si descansan los domingos)
     sunday_opening_time = models.TimeField(null=True, blank=True, verbose_name="Apertura (Domingo)")
     sunday_closing_time = models.TimeField(null=True, blank=True, verbose_name="Cierre (Domingo)")
 
-    # Indicador para desactivar el negocio sin borrarlo físicamente
     is_active = models.BooleanField(default=True, verbose_name="¿Empresa Activa?")
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.name)
+            slug = base_slug
+            counter = 1
+            while Business.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
 
     def get_today_schedule(self):
         """Retorna una tupla (apertura, cierre) correspondiente al día de la semana actual."""
-        weekday = timezone.localtime().weekday() # 0=Lun, 1=Mar, 2=Mié, 3=Jue, 4=Vie, 5=Sáb, 6=Dom
+        weekday = timezone.localtime().weekday()
         if weekday == 5:
             return (self.saturday_opening_time, self.saturday_closing_time)
         elif weekday == 6:
@@ -63,20 +66,13 @@ class Business(models.Model):
 
     @property
     def is_open_now(self):
-        """
-        Calcula automáticamente si el negocio está abierto según el día exacto de la semana.
-        - Si hoy es Sábado/Domingo y dejaron vacíos esos campos, retorna False (Cerrado).
-        - Si de Lun-Vie no configuraron horario, retorna None.
-        """
         now = timezone.localtime()
         current_time = now.time()
         weekday = now.weekday()
 
         op_time, cl_time = self.get_today_schedule()
 
-        # Si es fin de semana y no tiene horario configurado, está cerrado ese día
         if weekday in [5, 6] and (not op_time or not cl_time):
-            # Solo marca cerrado si al menos tiene configurado horario entre semana
             if self.opening_time and self.closing_time:
                 return False
             return None
@@ -84,17 +80,13 @@ class Business(models.Model):
         if not op_time or not cl_time:
             return None
 
-        # Caso 1: Horario normal en el mismo día (ej. 10:00 a 13:00)
         if op_time <= cl_time:
             return op_time <= current_time <= cl_time
-        
-        # Caso 2: Horario nocturno que cruza la medianoche (ej. 18:00 a 02:00)
         else:
             return current_time >= op_time or current_time <= cl_time
 
     @property
     def today_hours_display(self):
-        """Devuelve el texto del horario correspondiente al día de hoy."""
         op_time, cl_time = self.get_today_schedule()
         if op_time and cl_time:
             return f"{op_time.strftime('%H:%M')} - {cl_time.strftime('%H:%M')} hrs"
@@ -130,6 +122,7 @@ class Product(models.Model):
     business = models.ForeignKey('Business', on_delete=models.CASCADE)
     
     name = models.CharField(max_length=100)
+    slug = models.SlugField(unique=True, blank=True, null=True, max_length=255) # 🔗 URL amigable automática
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     condition = models.CharField(max_length=20, choices=CONDITION_CHOICES, default='nuevo')
@@ -151,6 +144,17 @@ class Product(models.Model):
     
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='otro')
     is_available = models.BooleanField(default=True, verbose_name="Disponible en stock")
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            base_slug = slugify(self.name)
+            slug = base_slug
+            counter = 1
+            while Product.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug = f"{base_slug}-{counter}"
+                counter += 1
+            self.slug = slug
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -184,7 +188,7 @@ class Product(models.Model):
             discount = ((self.price - self.promo_price) / self.price) * 100
             return round(discount)
         return 0
-    
+
 
 # ==========================================
 # MODELO DE RESEÑAS Y VALORACIONES

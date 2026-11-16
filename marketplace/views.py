@@ -10,7 +10,6 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.contrib import messages
 
-# Modelos y Formularios del sistema (Incluyendo Favorite)
 from .models import Product, Business, Review, Favorite
 from .forms import BusinessForm, BusinessRegistrationForm, ProductForm, ReviewForm
 
@@ -366,13 +365,13 @@ def edit_product_view(request, product_id):
 
 
 # ==========================================
-# VISTA DE DETALLE DEL PRODUCTO
+# VISTA DE DETALLE DEL PRODUCTO (Con Slug)
 # ==========================================
-def product_detail_view(request, product_id):
+def product_detail_view(request, product_slug):
     DEFAULT_LAT = 19.0413
     DEFAULT_LNG = -98.2062
     
-    product = get_object_or_404(Product.objects.select_related('business'), id=product_id)
+    product = get_object_or_404(Product.objects.select_related('business'), slug=product_slug)
     
     if not product.business.is_active or not product.is_available:
         return redirect('home')
@@ -394,13 +393,13 @@ def product_detail_view(request, product_id):
 
 
 # ==========================================
-# VISTA DE PERFIL PÚBLICO DEL NEGOCIO (Actualizada con Favoritos)
+# VISTA DE PERFIL PÚBLICO DEL NEGOCIO (Con Slug)
 # ==========================================
-def business_profile_view(request, business_id):
+def business_profile_view(request, business_slug):
     DEFAULT_LAT = 19.0413
     DEFAULT_LNG = -98.2062
     
-    business = get_object_or_404(Business, id=business_id, is_active=True)
+    business = get_object_or_404(Business, slug=business_slug, is_active=True)
     products = Product.objects.filter(business=business, is_available=True).order_by('-id')
     
     lat_param = request.GET.get('lat', DEFAULT_LAT)
@@ -418,7 +417,6 @@ def business_profile_view(request, business_id):
     for p in products:
         p.distance_km = business.distance_km
 
-    # 🌟 Obtener los favoritos del usuario autenticado para el perfil
     user_favorite_ids = []
     if request.user.is_authenticated:
         user_favorite_ids = list(Favorite.objects.filter(user=request.user).values_list('product_id', flat=True))
@@ -428,7 +426,7 @@ def business_profile_view(request, business_id):
         'products': products,
         'user_lat': user_lat,
         'user_lng': user_lng,
-        'user_favorite_ids': user_favorite_ids, # 👈 Agregado al context
+        'user_favorite_ids': user_favorite_ids,
     }
     return render(request, 'marketplace/business_profile.html', context)
 

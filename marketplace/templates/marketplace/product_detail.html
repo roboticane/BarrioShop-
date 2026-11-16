@@ -87,7 +87,9 @@
                     <div class="bg-gray-50 p-3 rounded-xl flex items-center justify-between">
                         <div>
                             <span class="text-[10px] font-bold text-gray-400 uppercase block">Vendido por</span>
-                            <span class="text-xs font-extrabold text-gray-800">{{ product.business.name }}</span>
+                            <a href="{% url 'business_profile' product.business.slug %}" class="text-xs font-extrabold text-blue-600 hover:underline">
+                                {{ product.business.name }} →
+                            </a>
                             <span class="text-[10px] text-gray-500 block">📍 A {{ product.distance_km }} km de ti ({{ product.business.address }})</span>
                         </div>
                     </div>

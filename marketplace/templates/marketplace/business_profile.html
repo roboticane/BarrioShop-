@@ -85,7 +85,7 @@
                 <div>
                     <!-- Imagen optimizada -->
                     <div class="relative h-48 bg-gray-50 flex items-center justify-center p-3">
-                        <a href="{% url 'product_detail' product.id %}" class="w-full h-full flex items-center justify-center">
+                        <a href="{% url 'product_detail' product.slug %}" class="w-full h-full flex items-center justify-center">
                             {% if product.image %}
                                 <img src="{{ product.image.url }}" alt="{{ product.name }}" class="max-w-full max-h-full object-contain hover:scale-105 transition">
                             {% else %}
@@ -108,7 +108,7 @@
                             {{ product.get_category_display }}
                         </span>
                         
-                        <a href="{% url 'product_detail' product.id %}" class="font-bold text-gray-900 text-lg mt-1 leading-tight hover:text-blue-600 transition block">
+                        <a href="{% url 'product_detail' product.slug %}" class="font-bold text-gray-900 text-lg mt-1 leading-tight hover:text-blue-600 transition block">
                             {{ product.name }}
                         </a>
                         
@@ -128,7 +128,7 @@
                 
                 <!-- Botón de WhatsApp y Favorito -->
                 <div class="p-4 bg-gray-50 border-t border-gray-100 flex items-center gap-2">
-                    <a href="https://wa.me/52{{ product.business.whatsapp }}?text=Hola,%20me%20interesa%20el%20producto%20*{{ product.name }}*%2520que%20vi%20en%20BarrioShop." 
+                    <a href="https://wa.me/52{{ product.business.whatsapp }}?text=Hola,%20me%20interesa%20el%20producto%20*{{ product.name }}*%20que%20vi%20en%20BarrioShop." 
                        target="_blank" 
                        class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition shadow-sm">
                         💬 WhatsApp

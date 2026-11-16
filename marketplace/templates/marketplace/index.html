@@ -81,7 +81,7 @@
                 <div class="min-w-[210px] max-w-[210px] bg-white text-gray-800 rounded-xl p-3 shadow-sm flex flex-col justify-between hover:scale-105 transition">
                     <div>
                         <div class="relative h-28 bg-gray-50 rounded-lg flex items-center justify-center p-1 mb-2">
-                            <a href="{% url 'product_detail' item.id %}" class="w-full h-full flex items-center justify-center">
+                            <a href="{% url 'product_detail' item.slug %}" class="w-full h-full flex items-center justify-center">
                                 {% if item.image %}
                                     <img src="{{ item.image.url }}" class="max-w-full max-h-full object-contain" alt="{{ item.name }}">
                                 {% else %}
@@ -92,11 +92,11 @@
                                 ⚡ OFERTA
                             </span>
                         </div>
-                        <a href="{% url 'product_detail' item.id %}" class="font-bold text-xs truncate hover:text-blue-600 transition block">
+                        <a href="{% url 'product_detail' item.slug %}" class="font-bold text-xs truncate hover:text-blue-600 transition block">
                             {{ item.name }}
                         </a>
-                        <!-- Enlace al perfil del negocio en Ofertas Relámpago -->
-                        <a href="{% url 'business_profile' item.business.id %}" class="text-[10px] text-gray-500 hover:text-blue-600 hover:underline truncate block">
+                        <!-- Enlace al perfil del negocio con SLUG en Ofertas Relámpago -->
+                        <a href="{% url 'business_profile' item.business.slug %}" class="text-[10px] text-gray-500 hover:text-blue-600 hover:underline truncate block">
                             📍 {{ item.business.name }} ({{ item.distance_km }} km)
                         </a>
                     </div>
@@ -221,7 +221,7 @@
                             </div>
                         {% endif %}
 
-                        <a href="{% url 'product_detail' product.id %}" class="w-full h-full flex items-center justify-center">
+                        <a href="{% url 'product_detail' product.slug %}" class="w-full h-full flex items-center justify-center">
                             {% if product.image %}
                                 <img src="{{ product.image.url }}" alt="{{ product.name }}" class="max-w-full max-h-full object-contain hover:scale-105 transition">
                             {% else %}
@@ -249,8 +249,8 @@
                     <!-- Información del Producto -->
                     <div class="p-4">
                         <div class="flex items-center justify-between gap-1 mb-1">
-                            <!-- Enlace al perfil del vendedor al hacer clic en su nombre -->
-                            <a href="{% url 'business_profile' product.business.id %}" class="text-xs font-bold text-blue-600 uppercase tracking-wide truncate hover:underline">
+                            <!-- Enlace al perfil del vendedor con SLUG -->
+                            <a href="{% url 'business_profile' product.business.slug %}" class="text-xs font-bold text-blue-600 uppercase tracking-wide truncate hover:underline">
                                 {{ product.business.name }}
                             </a>
                             
@@ -286,7 +286,7 @@
                         </div>
 
                         <!-- Título -->
-                        <a href="{% url 'product_detail' product.id %}" class="font-bold text-gray-900 text-lg mt-1 leading-tight hover:text-blue-600 transition block">
+                        <a href="{% url 'product_detail' product.slug %}" class="font-bold text-gray-900 text-lg mt-1 leading-tight hover:text-blue-600 transition block">
                             {{ product.name }}
                         </a>
                         

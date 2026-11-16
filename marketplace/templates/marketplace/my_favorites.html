@@ -28,7 +28,7 @@
             <div class="bg-white rounded-xl shadow-md overflow-hidden flex flex-col justify-between border border-gray-100">
                 <div>
                     <div class="relative h-44 bg-gray-50 flex items-center justify-center p-3">
-                        <a href="{% url 'product_detail' fav.product.id %}" class="w-full h-full flex items-center justify-center">
+                        <a href="{% url 'product_detail' fav.product.slug %}" class="w-full h-full flex items-center justify-center">
                             {% if fav.product.image %}
                                 <img src="{{ fav.product.image.url }}" alt="{{ fav.product.name }}" class="max-w-full max-h-full object-contain">
                             {% else %}
@@ -40,10 +40,10 @@
                         </a>
                     </div>
                     <div class="p-4">
-                        <a href="{% url 'business_profile' fav.product.business.id %}" class="text-[11px] font-bold text-blue-600 uppercase hover:underline">
+                        <a href="{% url 'business_profile' fav.product.business.slug %}" class="text-[11px] font-bold text-blue-600 uppercase hover:underline">
                             {{ fav.product.business.name }}
                         </a>
-                        <a href="{% url 'product_detail' fav.product.id %}" class="font-bold text-gray-900 text-base mt-1 block hover:text-blue-600">
+                        <a href="{% url 'product_detail' fav.product.slug %}" class="font-bold text-gray-900 text-base mt-1 block hover:text-blue-600">
                             {{ fav.product.name }}
                         </a>
                         <div class="mt-2 flex items-baseline gap-2">
