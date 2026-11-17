@@ -23,9 +23,8 @@
     <main class="max-w-4xl mx-auto px-4">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
             
-            <!-- SECCIÓN DE FOTOGRAFÍAS (HASTA 3) -->
+            <!-- SECCIÓN DE FOTOGRAFÍAS -->
             <div class="space-y-3">
-                <!-- Contenedor Principal Ajustado: Utiliza object-contain para no deformar o recortar las fotos -->
                 <div class="w-full h-80 bg-gray-50 rounded-xl overflow-hidden border border-gray-200 flex items-center justify-center p-4">
                     {% if product.image %}
                         <img id="mainImage" src="{{ product.image.url }}" class="max-w-full max-h-full object-contain" alt="{{ product.name }}">
@@ -34,7 +33,7 @@
                     {% endif %}
                 </div>
 
-                <!-- Miniaturas (Selector de las 3 fotos con ajuste proporcional) -->
+                <!-- Miniaturas -->
                 <div class="flex gap-3 overflow-x-auto pb-1">
                     {% if product.image %}
                         <div class="w-20 h-20 bg-gray-50 rounded-lg border-2 border-emerald-500 overflow-hidden cursor-pointer flex items-center justify-center p-1 thumbnail-item" onclick="changeImage(this, '{{ product.image.url }}')">
@@ -57,21 +56,29 @@
             <!-- INFORMACIÓN DEL PRODUCTO -->
             <div class="flex flex-col justify-between space-y-4">
                 <div>
-                    <!-- Etiqueta de Condición y Categoría -->
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="text-[10px] font-extrabold px-2.5 py-1 rounded-md {% if product.condition == 'nuevo' %}bg-emerald-100 text-emerald-700{% else %}bg-blue-100 text-blue-700{% endif %} uppercase">
-                            {{ product.get_condition_display }}
-                        </span>
-                        <span class="text-[10px] font-bold bg-gray-100 text-gray-600 px-2.5 py-1 rounded-md uppercase">
-                            {{ product.get_category_display }}
-                        </span>
+                    <!-- Etiqueta de Condición, Categoría y Botón Compartir -->
+                    <div class="flex items-center justify-between gap-2 mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-extrabold px-2.5 py-1 rounded-md {% if product.condition == 'nuevo' %}bg-emerald-100 text-emerald-700{% else %}bg-blue-100 text-blue-700{% endif %} uppercase">
+                                {{ product.get_condition_display }}
+                            </span>
+                            <span class="text-[10px] font-bold bg-gray-100 text-gray-600 px-2.5 py-1 rounded-md uppercase">
+                                {{ product.get_category_display }}
+                            </span>
+                        </div>
+
+                        <button type="button" 
+                                onclick="sharePage(this, '{{ product.name|escapejs }} - BarrioShop', 'Mira este producto en BarrioShop Puebla')"
+                                class="text-[11px] font-bold bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 px-3 py-1 rounded-full transition flex items-center gap-1 cursor-pointer">
+                            🔗 Compartir
+                        </button>
                     </div>
 
                     <h1 class="text-xl font-extrabold text-gray-900 mb-2">{{ product.name }}</h1>
                     
                     <!-- Precios -->
                     <div class="flex items-baseline gap-3 mb-4">
-                        {% if product.promo_price %}
+                        {% if product.promo_price and product.promo_price < product.price %}
                             <span class="text-2xl font-black text-red-600">${{ product.promo_price }}</span>
                             <span class="text-sm font-bold text-gray-400 line-through">${{ product.price }}</span>
                         {% else %}
@@ -104,22 +111,35 @@
         </div>
     </main>
 
-    <!-- Script para alternar la imagen principal y resaltar la miniatura activa -->
     <script>
         function changeImage(element, src) {
-            // Actualiza la imagen principal
             document.getElementById('mainImage').src = src;
-
-            // Restablece el borde de todas las miniaturas
             const thumbnails = document.querySelectorAll('.thumbnail-item');
             thumbnails.forEach(thumb => {
                 thumb.classList.remove('border-emerald-500');
                 thumb.classList.add('border-transparent');
             });
-
-            // Aplica el borde de selección a la miniatura clickeada
             element.classList.remove('border-transparent');
             element.classList.add('border-emerald-500');
+        }
+
+        function sharePage(btn, title, text) {
+            const url = window.location.href;
+            if (navigator.share) {
+                navigator.share({ title: title, text: text, url: url }).catch(() => {});
+            } else {
+                navigator.clipboard.writeText(url).then(() => {
+                    const originalHTML = btn.innerHTML;
+                    btn.innerHTML = '✅ ¡Enlace copiado!';
+                    btn.classList.remove('bg-blue-50', 'text-blue-600', 'border-blue-200');
+                    btn.classList.add('bg-emerald-50', 'text-emerald-700', 'border-emerald-200');
+                    setTimeout(() => {
+                        btn.innerHTML = originalHTML;
+                        btn.classList.remove('bg-emerald-50', 'text-emerald-700', 'border-emerald-200');
+                        btn.classList.add('bg-blue-50', 'text-blue-600', 'border-blue-200');
+                    }, 2200);
+                });
+            }
         }
     </script>
 </body>
