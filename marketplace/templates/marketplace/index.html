@@ -11,13 +11,17 @@
 <body class="bg-gray-100 min-h-screen font-sans">
     
     <!-- ========================================== -->
-    <!-- BARRA DE NAVEGACIÓN SUPERIOR -->
+    <!-- BARRA DE NAVEGACIÓN SUPERIOR (ESTILO AMAZON) -->
     <!-- ========================================== -->
     <header class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col sm:flex-row justify-between items-center gap-4">
+            
+            <!-- Logotipo -->
             <div class="flex items-center space-x-2">
                 <span class="text-2xl">🛒</span>
-                <h1 class="text-2xl font-bold text-gray-800">BarrioShop <span class="text-xs bg-blue-100 text-blue-700 font-semibold px-2 py-0.5 rounded">Puebla</span></h1>
+                <a href="{% url 'home' %}" class="text-2xl font-bold text-gray-800">
+                    BarrioShop <span class="text-xs bg-blue-100 text-blue-700 font-semibold px-2 py-0.5 rounded">Puebla</span>
+                </a>
             </div>
             
             <!-- Estado de la Ubicación del usuario -->
@@ -25,34 +29,81 @@
                 <span class="animate-pulse mr-2">📍</span> Ubicación activa en Puebla
             </div>
             
-            <!-- Botones de Acción y Acceso -->
-            <div class="flex flex-wrap items-center gap-2">
-                {% if user.is_authenticated %}
-                    <a href="{% url 'my_favorites' %}" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-3 py-2 rounded-md font-bold transition shadow-sm flex items-center gap-1">
-                        ❤️ Mis Favoritos
-                    </a>
-                    {% if user.business %}
-                        <a href="{% url 'dashboard' %}" class="text-xs bg-amber-600 hover:bg-amber-700 text-white px-3 py-2 rounded-md font-medium transition shadow-sm">
-                            🏪 Mi Negocio
-                        </a>
-                    {% else %}
-                        <a href="{% url 'customer_logout' %}" class="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-md font-medium transition">
-                            Salir
-                        </a>
-                    {% endif %}
-                {% else %}
-                    <a href="{% url 'customer_login' %}" class="text-xs bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 px-3 py-2 rounded-md font-semibold transition shadow-sm">
-                        👤 Entrar / Favoritos
-                    </a>
-                {% endif %}
+            <!-- Menú Desplegable Tipo Amazon (Cuenta y Listas) -->
+            <div class="relative group">
+                <!-- Botón Principal del Menú -->
+                <button type="button" class="flex flex-col text-left px-3 py-1.5 rounded-lg border border-transparent hover:border-gray-300 transition cursor-pointer">
+                    <span class="text-[11px] text-gray-500 font-medium leading-tight">
+                        {% if user.is_authenticated %}
+                            Hola, {{ user.first_name|default:user.username }}
+                        {% else %}
+                            Hola, identifícate
+                        {% endif %}
+                    </span>
+                    <span class="text-xs font-extrabold text-gray-800 flex items-center gap-1 leading-tight">
+                        Cuenta y Listas <span class="text-[9px] text-gray-500">▼</span>
+                    </span>
+                </button>
 
-                <a href="{% url 'business_login' %}" class="text-xs bg-amber-600 hover:bg-amber-700 text-white px-3 py-2 rounded-md font-medium transition shadow-sm">
-                    🔐 Acceso Negocios
-                </a>
-                <a href="{% url 'register_business' %}" class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium transition shadow-sm">
-                    ➕ Registrar mi Negocio
-                </a>
+                <!-- Contenedor Desplegable (Dropdown) -->
+                <div class="absolute right-0 w-72 sm:w-80 bg-white border border-gray-200 rounded-xl shadow-xl py-4 px-5 hidden group-hover:block z-50 pt-3">
+                    
+                    {% if not user.is_authenticated %}
+                        <!-- SECCIÓN: NO LOGUEADO -->
+                        <div class="text-center pb-3 border-b border-gray-100 mb-3">
+                            <a href="{% url 'customer_login' %}" class="w-full block bg-amber-400 hover:bg-amber-500 text-gray-900 font-bold text-xs py-2 rounded-lg shadow-sm transition mb-2">
+                                Identificarse
+                            </a>
+                            <p class="text-[11px] text-gray-500">¿Eres cliente nuevo? <a href="{% url 'customer_login' %}" class="text-blue-600 hover:underline font-semibold">Empieza aquí.</a></p>
+                        </div>
+                    {% else %}
+                        <!-- SECCIÓN: LOGUEADO (Cabecera con Nombre) -->
+                        <div class="pb-3 border-b border-gray-100 mb-3 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-extrabold text-gray-900">{{ user.get_full_name|default:user.username }}</p>
+                                <p class="text-[10px] text-gray-400">
+                                    {% if user.business %}Cuenta de Negocio{% else %}Cuenta de Cliente{% endif %}
+                                </p>
+                            </div>
+                            <span class="text-lg">{% if user.business %}🏪{% else %}👤{% endif %}</span>
+                        </div>
+                    {% endif %}
+
+                    <div class="grid grid-cols-2 gap-4 text-xs">
+                        <!-- Columna Izquierda: Listas / Favoritos -->
+                        <div class="space-y-2 border-r border-gray-100 pr-2">
+                            <span class="font-bold text-gray-900 block border-b border-gray-100 pb-1">Tus Listas</span>
+                            <a href="{% url 'my_favorites' %}" class="block text-gray-600 hover:text-blue-600 transition">❤️ Mis Favoritos</a>
+                            <a href="{% url 'home' %}" class="block text-gray-600 hover:text-blue-600 transition">🔍 Explorar Catálogo</a>
+                        </div>
+
+                        <!-- Columna Derecha: Mi Cuenta / Configuración -->
+                        <div class="space-y-2">
+                            <span class="font-bold text-gray-900 block border-b border-gray-100 pb-1">Tu Cuenta</span>
+                            
+                            {% if user.is_authenticated %}
+                                {% if user.business %}
+                                    <a href="{% url 'dashboard' %}" class="block font-bold text-amber-600 hover:underline transition">🏪 Panel de mi Negocio</a>
+                                    <a href="{% url 'edit_business_profile' %}" class="block text-gray-600 hover:text-blue-600 transition">⚙️ Config. Empresa</a>
+                                    <a href="{% url 'add_product' %}" class="block text-gray-600 hover:text-blue-600 transition">📦 Publicar Producto</a>
+                                {% else %}
+                                    <a href="{% url 'my_favorites' %}" class="block text-gray-600 hover:text-blue-600 transition">⚙️ Mi Configuración</a>
+                                    <a href="{% url 'register_business' %}" class="block font-bold text-blue-600 hover:underline transition">🚀 Registrar mi Negocio</a>
+                                {% endif %}
+
+                                <div class="pt-2 border-t border-gray-100 mt-2">
+                                    <a href="{% url 'customer_logout' %}" class="block text-red-600 hover:underline font-semibold">🚪 Cerrar Sesión</a>
+                                </div>
+                            {% else %}
+                                <a href="{% url 'business_login' %}" class="block font-bold text-amber-600 hover:underline transition">🔐 Acceso Negocios</a>
+                                <a href="{% url 'register_business' %}" class="block text-blue-600 hover:underline transition">➕ Registrar mi Negocio</a>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                </div>
             </div>
+
         </div>
     </header>
 
@@ -229,7 +280,7 @@
                             {% endif %}
                         </a>
                         
-                        <!-- Distancia flotante (Ajustada si el producto es destacado para no tapar el badge) -->
+                        <!-- Distancia flotante -->
                         {% if not product.is_featured_active %}
                             <span class="absolute top-2 left-2 bg-black/60 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full pointer-events-none">
                                 📍 A {{ product.distance_km }} km
@@ -249,7 +300,6 @@
                     <!-- Información del Producto -->
                     <div class="p-4">
                         <div class="flex items-center justify-between gap-1 mb-1">
-                            <!-- Enlace al perfil del vendedor con SLUG -->
                             <a href="{% url 'business_profile' product.business.slug %}" class="text-xs font-bold text-blue-600 uppercase tracking-wide truncate hover:underline">
                                 {{ product.business.name }}
                             </a>
@@ -265,7 +315,7 @@
                             {% endif %}
                         </div>
 
-                        <!-- 🕒 ESTADO DE HORARIO (Abierto / Cerrado Dinámico) -->
+                        <!-- 🕒 ESTADO DE HORARIO -->
                         <div class="flex flex-wrap items-center gap-1.5 mb-2">
                             {% if product.business.is_open_now is True %}
                                 <span class="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
@@ -279,7 +329,6 @@
                                 </span>
                             {% endif %}
 
-                            <!-- 🕒 Horario dinámico del día de hoy -->
                             <span class="text-[10px] text-gray-500 font-medium">
                                 ({{ product.business.today_hours_display }})
                             </span>
@@ -292,17 +341,13 @@
                         
                         <p class="text-gray-500 text-xs mt-1 line-clamp-2">{{ product.description }}</p>
 
-                        <!-- 🛡️ APARTADO VISUAL DE LA GARANTÍA DEL PRODUCTO -->
+                        <!-- 🛡️ GARANTÍA -->
                         {% if product.warranty %}
                             <div class="mt-2.5 p-2 bg-blue-50/90 border border-blue-200 rounded-lg flex items-start gap-1.5">
                                 <span class="text-xs">🛡️</span>
                                 <div>
-                                    <p class="text-[11px] font-bold text-blue-900 leading-none">
-                                        Garantía:
-                                    </p>
-                                    <p class="text-[11px] text-blue-800 font-medium leading-tight mt-0.5">
-                                        {{ product.warranty }}
-                                    </p>
+                                    <p class="text-[11px] font-bold text-blue-900 leading-none">Garantía:</p>
+                                    <p class="text-[11px] text-blue-800 font-medium leading-tight mt-0.5">{{ product.warranty }}</p>
                                 </div>
                             </div>
                         {% endif %}
@@ -318,7 +363,7 @@
                             </div>
                         {% endif %}
                         
-                        <!-- Precios y Sticker de Descuento (Precio original tachado arriba, nuevo precio abajo) -->
+                        <!-- Precios y Sticker de Descuento -->
                         <div class="mt-3 flex items-center justify-between">
                             <div class="flex flex-col">
                                 {% if product.promo_price and product.promo_price < product.price %}
@@ -329,7 +374,6 @@
                                 {% endif %}
                             </div>
 
-                            <!-- Sticker Dinámico de Porcentaje de Ahorro -->
                             {% if product.promo_price and product.promo_price < product.price %}
                                 <span class="bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded-md shadow-sm uppercase tracking-wider">
                                     -{{ product.discount_percentage }}% OFF
@@ -389,7 +433,6 @@
                         💬 WhatsApp
                     </a>
 
-                    <!-- Botón para compartir este producto específico -->
                     <button type="button" 
                             onclick="shareProduct(this, '{% url 'product_detail' product.slug %}', '{{ product.name|escapejs }}', 'Mira este producto en BarrioShop Puebla')"
                             class="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-xs font-bold py-2 px-2.5 rounded-lg transition shadow-sm flex items-center justify-center cursor-pointer"
