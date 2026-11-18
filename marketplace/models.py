@@ -13,10 +13,17 @@ class Business(models.Model):
         ('entrega', 'Entregas en Puntos / Puntos Medios'),
     ]
 
+    PLAN_CHOICES = [
+        ('free', 'Plan Vecino (Gratis)'),
+        ('pro', 'Plan Barrio Pro'),
+        ('estrella', 'Plan Negocio Estrella'),
+    ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
     
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True, blank=True, null=True, max_length=150)
+    logo = models.ImageField(upload_to='business_logos/', null=True, blank=True, verbose_name="Logotipo de la Empresa")
     description = models.TextField()
     whatsapp = models.CharField(max_length=20)
     address = models.CharField(max_length=255)
@@ -40,6 +47,10 @@ class Business(models.Model):
 
     is_active = models.BooleanField(default=True, verbose_name="¿Empresa Activa?")
 
+    # 🌟 NUEVOS CAMPOS PARA PLANES Y SUSCRIPCIÓN
+    plan = models.CharField(max_length=20, choices=PLAN_CHOICES, default='free', verbose_name="Plan Actual")
+    plan_expires_at = models.DateTimeField(null=True, blank=True, verbose_name="Plan Vence El")
+
     def save(self, *args, **kwargs):
         if not self.slug:
             base_slug = slugify(self.name)
@@ -53,6 +64,23 @@ class Business(models.Model):
 
     def __str__(self):
         return self.name
+
+    # 🌟 MÉTODOS Y LÍMITES SEGÚN EL PLAN
+    @property
+    def max_products_allowed(self):
+        if self.plan == 'pro':
+            return 50
+        elif self.plan == 'estrella':
+            return 999999 # Ilimitados
+        return 10 # Plan Free / Vecino por defecto
+
+    @property
+    def max_express_promos_allowed(self):
+        if self.plan == 'pro':
+            return 5
+        elif self.plan == 'estrella':
+            return 999999 # Ilimitadas
+        return 1 # Plan Free (1 activa a la vez)
 
     def get_today_schedule(self):
         """Retorna una tupla (apertura, cierre) correspondiente al día de la semana actual."""
@@ -122,7 +150,7 @@ class Product(models.Model):
     business = models.ForeignKey('Business', on_delete=models.CASCADE)
     
     name = models.CharField(max_length=100)
-    slug = models.SlugField(unique=True, blank=True, null=True, max_length=255) # 🔗 URL amigable automática
+    slug = models.SlugField(unique=True, blank=True, null=True, max_length=255)
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     condition = models.CharField(max_length=20, choices=CONDITION_CHOICES, default='nuevo')

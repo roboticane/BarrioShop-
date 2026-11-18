@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ business.name }} - BarrioShop</title>
+    <link rel="icon" href="https://fav.farm/🛒" />
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans pb-12">
@@ -22,49 +23,62 @@
 
     <main class="max-w-7xl mx-auto px-4 py-8">
         
-        <!-- TARJETA DE PERFIL DEL NEGOCIO -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-                <div class="flex items-center gap-2 mb-1">
-                    <h1 class="text-2xl font-black text-gray-900">{{ business.name }}</h1>
-                    {% if business.business_type == 'store' %}
-                        <span class="text-xs bg-green-100 text-green-800 font-bold px-2.5 py-0.5 rounded-full">🏪 Local Fijo</span>
-                    {% else %}
-                        <span class="text-xs bg-amber-100 text-amber-800 font-bold px-2.5 py-0.5 rounded-full">🚚 {{ business.get_business_type_display }}</span>
-                    {% endif %}
-                </div>
-                
-                <p class="text-xs text-gray-500">📍 Dirección: {{ business.address }} (A {{ business.distance_km }} km de ti)</p>
-                
-                {% if business.delivery_zones %}
-                    <p class="text-xs text-amber-700 font-medium mt-1">📍 Puntos de entrega: {{ business.delivery_zones }}</p>
+        <!-- TARJETA DE PERFIL DEL NEGOCIO CON LOGOTIPO -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <!-- Logotipo del Negocio o Inicial -->
+                {% if business.logo %}
+                    <img src="{{ business.logo.url }}" alt="Logo de {{ business.name }}" 
+                         class="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-2 border-gray-200 shadow-sm bg-white flex-shrink-0">
+                {% else %}
+                    <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-3xl font-black border-2 border-blue-200 shadow-xs flex-shrink-0">
+                        {{ business.name|slice:":1"|upper }}
+                    </div>
                 {% endif %}
 
-                <!-- HORARIO DE ATENCIÓN Y ESTATUS -->
-                <div class="mt-2.5 flex flex-wrap items-center gap-2 text-xs">
-                    {% if business.is_open_now is not None %}
-                        {% if business.is_open_now %}
-                            <span class="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full">
-                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                Abierto ahora
-                            </span>
+                <div>
+                    <div class="flex flex-wrap items-center gap-2 mb-1">
+                        <h1 class="text-2xl font-black text-gray-900">{{ business.name }}</h1>
+                        {% if business.business_type == 'fisico' %}
+                            <span class="text-xs bg-green-100 text-green-800 font-bold px-2.5 py-0.5 rounded-full">🏪 Local Fijo</span>
                         {% else %}
-                            <span class="inline-flex items-center gap-1.5 bg-red-100 text-red-800 font-bold px-2.5 py-0.5 rounded-full">
-                                <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                                Cerrado por el momento
+                            <span class="text-xs bg-amber-100 text-amber-800 font-bold px-2.5 py-0.5 rounded-full">🚚 {{ business.get_business_type_display }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <p class="text-xs text-gray-500">📍 Dirección: {{ business.address }} (A {{ business.distance_km }} km de ti)</p>
+                    
+                    {% if business.delivery_zones %}
+                        <p class="text-xs text-amber-700 font-medium mt-1">📍 Puntos de entrega: {{ business.delivery_zones }}</p>
+                    {% endif %}
+
+                    <!-- HORARIO DE ATENCIÓN Y ESTATUS -->
+                    <div class="mt-2.5 flex flex-wrap items-center gap-2 text-xs">
+                        {% if business.is_open_now is not None %}
+                            {% if business.is_open_now %}
+                                <span class="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-800 font-bold px-2.5 py-0.5 rounded-full">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    Abierto ahora
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center gap-1.5 bg-red-100 text-red-800 font-bold px-2.5 py-0.5 rounded-full">
+                                    <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                    Cerrado por el momento
+                                </span>
+                            {% endif %}
+                        {% endif %}
+                        
+                        <span class="text-gray-600 font-medium bg-gray-50 px-2.5 py-1 rounded-full border border-gray-200">
+                            🕒 Horario de hoy: <strong>{{ business.today_hours_display }}</strong>
+                        </span>
+
+                        {% if business.work_days %}
+                            <span class="bg-gray-100 text-gray-700 font-bold px-2.5 py-1 rounded-full border border-gray-200">
+                                📅 Días: {{ business.work_days }}
                             </span>
                         {% endif %}
-                    {% endif %}
-                    
-                    <span class="text-gray-600 font-medium bg-gray-50 px-2.5 py-1 rounded-full border border-gray-200">
-                        🕒 Horario de hoy: <strong>{{ business.today_hours_display }}</strong>
-                    </span>
-
-                    {% if business.work_days %}
-                        <span class="bg-gray-100 text-gray-700 font-bold px-2.5 py-1 rounded-full border border-gray-200">
-                            📅 Días: {{ business.work_days }}
-                        </span>
-                    {% endif %}
+                    </div>
                 </div>
             </div>
 
@@ -89,9 +103,19 @@
         <!-- CUADRÍCULA DE PRODUCTOS DEL VENDEDOR -->
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {% for product in products %}
-            <div class="bg-white rounded-xl shadow-md overflow-hidden flex flex-col justify-between hover:shadow-lg transition border border-gray-100">
+            <!-- TARJETA CON MARCO DORADO RESALTADO PARA PRODUCTOS DESTACADOS -->
+            <div class="rounded-xl overflow-hidden flex flex-col justify-between transition border relative {% if product.is_featured_active %}bg-amber-50/30 border-amber-400 ring-2 ring-amber-400 shadow-xl scale-[1.01]{% else %}bg-white border-gray-100 shadow-md hover:shadow-lg{% endif %}">
                 <div>
                     <div class="relative h-48 bg-gray-50 flex items-center justify-center p-3">
+                        
+                        <!-- 🌟 INSIGNIA DORADA LLAMATIVA Y ANIMADA -->
+                        {% if product.is_featured_active %}
+                            <div class="absolute top-2 left-2 z-20 flex items-center gap-1 bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 text-white text-[11px] font-black px-3 py-1 rounded-full shadow-lg border border-amber-200/50 uppercase tracking-wider">
+                                <span class="animate-spin text-xs">⭐</span>
+                                <span>DESTACADO</span>
+                            </div>
+                        {% endif %}
+
                         <a href="{% url 'product_detail' product.slug %}" class="w-full h-full flex items-center justify-center">
                             {% if product.image %}
                                 <img src="{{ product.image.url }}" alt="{{ product.name }}" class="max-w-full max-h-full object-contain hover:scale-105 transition">
@@ -100,9 +124,16 @@
                             {% endif %}
                         </a>
                         
-                        <span class="absolute top-2 left-2 bg-black/60 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full pointer-events-none">
-                            📍 A {{ product.distance_km }} km
-                        </span>
+                        <!-- Distancia flotante (se mueve abajo si es destacado) -->
+                        {% if not product.is_featured_active %}
+                            <span class="absolute top-2 left-2 bg-black/60 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full pointer-events-none">
+                                📍 A {{ product.distance_km }} km
+                            </span>
+                        {% else %}
+                            <span class="absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm text-white text-[11px] font-semibold px-2.5 py-1 rounded-full pointer-events-none z-10 shadow-sm">
+                                📍 A {{ product.distance_km }} km
+                            </span>
+                        {% endif %}
 
                         <span class="absolute top-2 right-2 text-[10px] font-extrabold px-2 py-1 rounded-md shadow uppercase pointer-events-none {% if product.condition == 'nuevo' %}bg-emerald-100 text-emerald-700{% else %}bg-blue-100 text-blue-700{% endif %}">
                             {{ product.get_condition_display }}
@@ -193,7 +224,6 @@
         }
 
         function shareProduct(btn, relativeUrl, title, text) {
-            // Construye la URL absoluta basada en el dominio actual
             const url = window.location.origin + relativeUrl;
             if (navigator.share) {
                 navigator.share({ title: title, text: text, url: url }).catch(() => {});

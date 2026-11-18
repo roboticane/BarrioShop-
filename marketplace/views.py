@@ -194,7 +194,7 @@ def register_business_view(request):
 
 
 # ==========================================
-# VISTA PARA PUBLICAR NUEVOS PRODUCTOS
+# VISTA PARA PUBLICAR NUEVOS PRODUCTOS (Con Límite por Plan)
 # ==========================================
 @login_required(login_url='business_login')
 def add_product_view(request):
@@ -203,12 +203,22 @@ def add_product_view(request):
     except Business.DoesNotExist:
         return redirect('register_business')
 
+    # 🌟 VALIDACIÓN DE LÍMITE DE PRODUCTOS SEGÚN EL PLAN
+    current_products_count = Product.objects.filter(business=business).count()
+    if current_products_count >= business.max_products_allowed:
+        messages.error(
+            request, 
+            f"⚠️ Has alcanzado el límite de {business.max_products_allowed} productos de tu {business.get_plan_display()}. ¡Mejora tu plan para publicar más!"
+        )
+        return redirect('dashboard')
+
     if request.method == 'POST':
         form = ProductForm(request.POST, request.FILES)
         if form.is_valid():
             product = form.save(commit=False)
             product.business = business
             product.save()
+            messages.success(request, f"✨ ¡El producto '{product.name}' ha sido publicado con éxito!")
             return redirect('dashboard')
     else:
         form = ProductForm()
@@ -275,7 +285,7 @@ def add_review_view(request, product_id):
 
 
 # ==========================================
-# ACTIVAR / DESACTIVAR PROMOCIÓN EXPRÉS (24H)
+# ACTIVAR / DESACTIVAR PROMOCIÓN EXPRÉS (Con Límite por Plan)
 # ==========================================
 @login_required(login_url='business_login')
 def toggle_express_promo_view(request, product_id):
@@ -289,8 +299,9 @@ def toggle_express_promo_view(request, product_id):
             express_promo_end__gt=timezone.now()
         ).count()
 
-        if active_promos_count >= 3:
-            messages.error(request, "⚠️ Límite alcanzado: Solo puedes tener hasta 3 Promociones Exprés activas.")
+        # 🌟 USAMOS EL LÍMITE DINÁMICO SEGÚN EL PLAN DEL NEGOCIO
+        if active_promos_count >= business.max_express_promos_allowed:
+            messages.error(request, f"⚠️ Límite alcanzado: Tu {business.get_plan_display()} permite máximo {business.max_express_promos_allowed} Promoción(es) Exprés activa(s).")
         else:
             product.activate_express_promo(hours=24)
             messages.success(request, f"⚡ ¡Promoción Exprés activada para '{product.name}'!")
@@ -422,6 +433,8 @@ def business_profile_view(request, business_slug):
     business = get_object_or_404(Business, slug=business_slug, is_active=True)
     products = Product.objects.filter(business=business, is_available=True).order_by('-id')
     
+    products = sorted(products, key=lambda x: not x.is_featured_active)
+    
     lat_param = request.GET.get('lat', DEFAULT_LAT)
     lng_param = request.GET.get('lng', DEFAULT_LNG)
     try:
@@ -541,7 +554,7 @@ def edit_business_profile_view(request):
     business = get_object_or_404(Business, user=request.user)
 
     if request.method == 'POST':
-        form = BusinessForm(request.POST, instance=business)
+        form = BusinessForm(request.POST, request.FILES, instance=business)
         if form.is_valid():
             form.save()
             messages.success(request, "✨ ¡Datos del negocio actualizados con éxito!")
