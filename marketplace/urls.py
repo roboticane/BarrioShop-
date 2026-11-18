@@ -42,4 +42,6 @@ urlpatterns = [
     path('cliente/registro/', views.customer_register_view, name='customer_register'),
     path('cliente/entrar/', views.customer_login_view, name='customer_login'),
     path('cliente/salir/', views.customer_logout_view, name='customer_logout'),
-]
+
+    path('robots.txt', views.robots_txt_view, name='robots_txt'),
+    ]

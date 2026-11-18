@@ -9,9 +9,29 @@ from math import radians, sin, cos, sqrt, atan2
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.contrib import messages
+from django.http import HttpResponse
 
 from .models import Product, Business, Review, Favorite
 from .forms import BusinessForm, BusinessRegistrationForm, ProductForm, ReviewForm
+
+# ==========================================
+# VISTA PARA ROBOTS.TXT (SEO BÚSQUEDAS)
+# ==========================================
+def robots_txt_view(request):
+    lines = [
+        "User-agent: *",
+        "Allow: /",
+        "Allow: /business/",
+        "Allow: /barrioshop/",
+        "Disallow: /dashboard/",
+        "Disallow: /cliente/",
+        "Disallow: /login/",
+        "Disallow: /register/",
+        "Disallow: /add-product/",
+        "Disallow: /mis-favoritos/",
+        "Disallow: /recuperar-password/",
+    ]
+    return HttpResponse("\n".join(lines), content_type="text/plain")
 
 # ==========================================
 # FUNCIÓN DE CÁLCULO DE DISTANCIA (Haversine)
