@@ -639,3 +639,18 @@ def toggle_favorite_view(request, product_id):
 def my_favorites_view(request):
     favorites = Favorite.objects.filter(user=request.user).select_related('product', 'product__business')
     return render(request, 'marketplace/my_favorites.html', {'favorites': favorites})
+
+# ==========================================
+# VISTA DE PLANES Y PRECIOS PARA NEGOCIOS
+# ==========================================
+@login_required(login_url='business_login')
+def plans_pricing_view(request):
+    try:
+        business = request.user.business
+    except Business.DoesNotExist:
+        return redirect('register_business')
+
+    context = {
+        'business': business,
+    }
+    return render(request, 'marketplace/plans.html', context)

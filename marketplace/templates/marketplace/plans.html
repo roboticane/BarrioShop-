@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planes y Suscripciones - BarrioShop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+
+    <!-- ENCABEZADO -->
+    <header class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="{% url 'dashboard' %}" class="text-sm font-bold text-blue-600 hover:underline">
+                ← Regresar al Panel de Control
+            </a>
+            <span class="text-xs font-semibold text-gray-500">BarrioShop Business</span>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto px-4 py-12">
+        <div class="text-center max-w-2xl mx-auto mb-12">
+            <span class="bg-blue-100 text-blue-800 text-xs font-extrabold px-3 py-1 rounded-full uppercase tracking-wider">
+                Planes para Locatarios
+            </span>
+            <h1 class="text-3xl font-black text-gray-900 mt-3">Impulsa tu negocio en Puebla</h1>
+            <p class="text-sm text-gray-500 mt-2">
+                Estás en el <strong class="text-gray-800">{{ business.get_plan_display }}</strong>. Elige el plan ideal para desbloquear más productos, ofertas relámpago y destacar frente a tu competencia local.
+            </p>
+        </div>
+
+        <!-- TARJETAS DE PRECIOS -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+            
+            <!-- PLAN VECINO (GRATIS) -->
+            <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-200 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-extrabold text-gray-900 text-lg">Plan Vecino</h3>
+                        <span class="bg-gray-100 text-gray-600 text-xs font-bold px-2.5 py-1 rounded-full">Actual</span>
+                    </div>
+                    <p class="text-3xl font-black text-gray-900 mb-6">$0 <span class="text-xs text-gray-400 font-normal">/ gratis</span></p>
+                    
+                    <ul class="space-y-3 text-xs text-gray-600 mb-8">
+                        <li class="flex items-center gap-2">✅ Hasta 10 productos en catálogo</li>
+                        <li class="flex items-center gap-2">✅ Perfil básico con WhatsApp</li>
+                        <li class="flex items-center gap-2">⚡ 1 Promoción Exprés simultánea</li>
+                        <li class="flex items-center gap-2 text-gray-400">❌ Sin insignia de verificado</li>
+                    </ul>
+                </div>
+                <div>
+                    {% if business.plan == 'free' %}
+                        <button disabled class="w-full bg-gray-100 text-gray-400 font-bold text-xs py-3 rounded-xl cursor-not-allowed uppercase">
+                            Tu Plan Actual
+                        </button>
+                    {% else %}
+                        <span class="text-xs text-center block text-gray-400">Plan básico</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- PLAN BARRIO PRO (DESTACADO) -->
+            <div class="bg-blue-900 text-white rounded-3xl p-8 shadow-xl border-2 border-amber-400 flex flex-col justify-between relative transform md:-translate-y-2">
+                <div class="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <span class="bg-amber-400 text-black text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow">
+                        ⭐ Más Popular
+                    </span>
+                </div>
+                <div>
+                    <div class="flex justify-between items-center mb-4 mt-2">
+                        <h3 class="font-extrabold text-white text-lg">Barrio Pro</h3>
+                    </div>
+                    <p class="text-3xl font-black text-white mb-6">$199 <span class="text-xs text-blue-200 font-normal">MXN / mes</span></p>
+                    
+                    <ul class="space-y-3 text-xs text-blue-100 mb-8">
+                        <li class="flex items-center gap-2">✅ Hasta 50 productos en catálogo</li>
+                        <li class="flex items-center gap-2">✅ Logotipo oficial de alta calidad</li>
+                        <li class="flex items-center gap-2">⚡ Hasta 5 Promociones Exprés mensuales</li>
+                        <li class="flex items-center gap-2">⭐ Productos destacados incluidos</li>
+                        <li class="flex items-center gap-2">🛡️ Badge de Negocio Verificado</li>
+                    </ul>
+                </div>
+                <div>
+                    <a href="https://wa.me/522220000000?text=Hola,%20me%20interesa%20contratar%20el%20Plan%20Barrio%20Pro%20para%20mi%20negocio%20({{ business.name }})." 
+                       target="_blank"
+                       class="w-full bg-amber-400 hover:bg-amber-500 text-black font-extrabold text-xs py-3.5 rounded-xl transition shadow text-center block uppercase tracking-wider">
+                        🚀 Activar Plan Pro
+                    </a>
+                </div>
+            </div>
+
+            <!-- PLAN NEGOCIO ESTRELLA -->
+            <div class="bg-white rounded-3xl p-8 shadow-sm border border-gray-200 flex flex-col justify-between">
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-extrabold text-gray-900 text-lg">Negocio Estrella</h3>
+                    </div>
+                    <p class="text-3xl font-black text-gray-900 mb-6">$399 <span class="text-xs text-gray-400 font-normal">MXN / mes</span></p>
+                    
+                    <ul class="space-y-3 text-xs text-gray-600 mb-8">
+                        <li class="flex items-center gap-2">✅ Productos ILIMITADOS</li>
+                        <li class="flex items-center gap-2">⚡ Promociones Exprés ilimitadas</li>
+                        <li class="flex items-center gap-2">⭐ Destacados Premium permanentes</li>
+                        <li class="flex items-center gap-2">📍 Prioridad en mapas y cercanía (5km)</li>
+                        <li class="flex items-center gap-2">💬 Soporte prioritario dedicado</li>
+                    </ul>
+                </div>
+                <div>
+                    <a href="https://wa.me/522220000000?text=Hola,%20quiero%20llevar%20mi%20negocio%20({{ business.name }})%20al%20Plan%20Negocio%20Estrella." 
+                       target="_blank"
+                       class="w-full bg-gray-900 hover:bg-black text-white font-extrabold text-xs py-3.5 rounded-xl transition shadow text-center block uppercase tracking-wider">
+                        🌟 Activar Plan Estrella
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+</body>
+</html>

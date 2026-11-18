@@ -44,4 +44,5 @@ urlpatterns = [
     path('cliente/salir/', views.customer_logout_view, name='customer_logout'),
 
     path('robots.txt', views.robots_txt_view, name='robots_txt'),
+    path('dashboard/planes/', views.plans_pricing_view, name='plans_pricing'),
     ]
