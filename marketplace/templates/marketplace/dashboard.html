@@ -150,13 +150,18 @@
                             <!-- Producto e Imagen -->
                             <td class="p-4 font-semibold flex items-center gap-3">
                                 {% if product.image %}
-                                    <img src="{{ product.image.url }}" class="w-10 h-10 object-cover rounded-lg shadow-sm">
+                                    <img src="{{ product.image.url }}" class="w-10 h-10 object-cover rounded-lg shadow-sm flex-shrink-0">
                                 {% else %}
-                                    <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-lg">📦</div>
+                                    <div class="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-lg flex-shrink-0">📦</div>
                                 {% endif %}
                                 <div>
                                     <span class="font-bold text-gray-800 block">{{ product.name }}</span>
                                     <span class="text-[10px] text-gray-400 truncate max-w-[180px] block">{{ product.description }}</span>
+                                    {% if product.can_use_installments %}
+                                        <span class="inline-block mt-1 bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                            💳 {{ product.installment_months }} meses{% if product.installment_interest_free %} sin intereses{% endif %} de ${{ product.monthly_installment_amount }}
+                                        </span>
+                                    {% endif %}
                                 </div>
                             </td>
 

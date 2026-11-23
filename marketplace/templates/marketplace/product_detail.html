@@ -77,14 +77,29 @@
                     <h1 class="text-xl font-extrabold text-gray-900 mb-2">{{ product.name }}</h1>
                     
                     <!-- Precios -->
-                    <div class="flex items-baseline gap-3 mb-4">
+                    <div class="flex items-baseline gap-3 mb-2">
                         {% if product.promo_price and product.promo_price < product.price %}
                             <span class="text-2xl font-black text-red-600">${{ product.promo_price }}</span>
                             <span class="text-sm font-bold text-gray-400 line-through">${{ product.price }}</span>
+                            <span class="bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded-md shadow-sm uppercase">
+                                -{{ product.discount_percentage }}% OFF
+                            </span>
                         {% else %}
                             <span class="text-2xl font-black text-gray-900">${{ product.price }}</span>
                         {% endif %}
                     </div>
+
+                    <!-- 💳 PROMOCIÓN A MESES (PLAN BARRIO PRO Y PLAN NEGOCIO ESTRELLA) -->
+                    {% if product.can_use_installments %}
+                        <div class="mb-4 p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2">
+                            <span class="text-base">💳</span>
+                            <p class="text-xs font-bold text-emerald-800">
+                                Hasta {{ product.installment_months }} meses{% if product.installment_interest_free %} sin intereses{% endif %} de ${{ product.monthly_installment_amount }}
+                            </p>
+                        </div>
+                    {% else %}
+                        <div class="mb-4"></div>
+                    {% endif %}
 
                     <p class="text-xs text-gray-600 leading-relaxed mb-6">{{ product.description }}</p>
                 </div>

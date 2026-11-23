@@ -13,7 +13,7 @@
                 <h1 class="text-xl font-bold text-gray-800">📦 Publicar Nuevo Producto</h1>
                 <p class="text-xs text-gray-500 mt-0.5">Añade productos o promociones al catálogo de tu tienda.</p>
             </div>
-            <<a href="{% url 'dashboard' %}" class="text-xs text-gray-500 hover:text-gray-800 font-semibold whitespace-nowrap">← Volver al Panel</a>
+            <a href="{% url 'dashboard' %}" class="text-xs text-gray-500 hover:text-gray-800 font-semibold whitespace-nowrap">← Volver al Panel</a>
         </div>
 
         <form method="post" enctype="multipart/form-data" class="space-y-4">
@@ -63,6 +63,38 @@
             <div>
                 <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Precio con Descuento (Opcional):</label>
                 {{ form.promo_price }}
+            </div>
+
+            <!-- PROMOCIÓN A MESES (EXCLUSIVO PLAN BARRIO PRO Y PLAN NEGOCIO ESTRELLA) -->
+            <div class="p-4 rounded-xl border {% if can_installments %}bg-emerald-50/60 border-emerald-200{% else %}bg-amber-50/70 border-amber-200{% endif %} space-y-3">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xs font-bold text-gray-800 uppercase flex items-center gap-1">
+                        💳 Promoción a Meses
+                    </h3>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full {% if can_installments %}bg-emerald-100 text-emerald-800{% else %}bg-amber-100 text-amber-800{% endif %}">
+                        Barrio Pro / Estrella
+                    </span>
+                </div>
+
+                {% if can_installments %}
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-[11px] font-semibold text-gray-700 mb-1">Plazo en meses:</label>
+                            {{ form.installment_months }}
+                        </div>
+                        <div class="flex items-center sm:pt-5">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                {{ form.installment_interest_free }}
+                                <span class="text-xs font-bold text-gray-700">¿Sin intereses?</span>
+                            </label>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="text-xs text-amber-800">
+                        Ofrece pagos a 3, 6, 9, 12, 18 o 24 meses en tus productos mejorando a <strong>Plan Barrio Pro</strong> o <strong>Plan Negocio Estrella</strong>.
+                        <a href="{% url 'plans_pricing' %}" class="underline font-bold ml-1">Ver planes →</a>
+                    </p>
+                {% endif %}
             </div>
 
             <!-- APARTADO DE LAS 3 FOTOGRAFÍAS -->

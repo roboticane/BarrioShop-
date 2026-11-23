@@ -4,7 +4,7 @@ from django.contrib.auth import login, authenticate, logout, get_user_model
 from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from math import radians, sin, cos, sqrt, atan2
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -13,6 +13,8 @@ from django.http import HttpResponse
 
 from .models import Product, Business, Review, Favorite
 from .forms import BusinessForm, BusinessRegistrationForm, ProductForm, ReviewForm
+
+MODEL_BACKEND = "django.contrib.auth.backends.ModelBackend"
 
 # ==========================================
 # VISTA PARA ROBOTS.TXT (SEO BÚSQUEDAS)
@@ -175,20 +177,28 @@ def nearby_products_view(request):
 # VISTA DE REGISTRO DE NUEVA EMPRESA
 # ==========================================
 def register_business_view(request):
+    already_logged_in = request.user.is_authenticated
+
     if request.method == 'POST':
-        form = BusinessRegistrationForm(request.POST, request.FILES)
+        form = BusinessRegistrationForm(
+            request.POST,
+            request.FILES,
+            user=request.user if already_logged_in else None,
+        )
         if form.is_valid():
             try:
-                business = form.save()
-                login(request, business.user)
+                with transaction.atomic():
+                    business = form.save()
+                if not already_logged_in:
+                    login(request, business.user, backend=MODEL_BACKEND)
                 messages.success(request, "¡Tu negocio ha sido registrado con éxito!")
                 return redirect('dashboard')
             except IntegrityError:
-                messages.error(request, "⚠️ El nombre de usuario o correo electrónico ya se encuentra registrado.")
+                messages.error(request, "⚠️ El nombre de usuario o correo electrónico ya se encuentra registrado o el usuario ya tiene un negocio asociado.")
         else:
             messages.error(request, "⚠️ Por favor corrige los errores en el formulario.")
     else:
-        form = BusinessRegistrationForm()
+        form = BusinessRegistrationForm(user=request.user if already_logged_in else None)
     
     return render(request, 'marketplace/register.html', {'form': form})
 
@@ -212,8 +222,10 @@ def add_product_view(request):
         )
         return redirect('dashboard')
 
+    can_installments = bool(business.is_active and business.plan in ['pro', 'estrella'])
+
     if request.method == 'POST':
-        form = ProductForm(request.POST, request.FILES)
+        form = ProductForm(request.POST, request.FILES, business=business)
         if form.is_valid():
             product = form.save(commit=False)
             product.business = business
@@ -221,11 +233,15 @@ def add_product_view(request):
             messages.success(request, f"✨ ¡El producto '{product.name}' ha sido publicado con éxito!")
             return redirect('dashboard')
     else:
-        form = ProductForm()
+        form = ProductForm(business=business)
         form.fields['business'].queryset = Business.objects.filter(id=business.id)
         form.fields['business'].initial = business
     
-    return render(request, 'marketplace/add_product.html', {'form': form})
+    return render(request, 'marketplace/add_product.html', {
+        'form': form,
+        'business': business,
+        'can_installments': can_installments,
+    })
 
 
 # ==========================================
@@ -247,7 +263,7 @@ def business_login_view(request):
         if user_obj:
             user = authenticate(request, username=user_obj.username, password=password)
             if user is not None:
-                login(request, user)
+                login(request, user, backend=getattr(user, "backend", MODEL_BACKEND))
                 return redirect('dashboard')
             else:
                 error_message = "La contraseña es incorrecta. Por favor verifica tus datos."
@@ -381,18 +397,24 @@ def reset_password_direct_view(request):
 def edit_product_view(request, product_id):
     business = request.user.business
     product = get_object_or_404(Product, id=product_id, business=business)
+    can_installments = bool(business.is_active and business.plan in ['pro', 'estrella'])
 
     if request.method == 'POST':
-        form = ProductForm(request.POST, request.FILES, instance=product)
+        form = ProductForm(request.POST, request.FILES, instance=product, business=business)
         if form.is_valid():
             form.save()
             messages.success(request, f"✨ ¡El producto '{product.name}' ha sido actualizado!")
             return redirect('dashboard')
     else:
-        form = ProductForm(instance=product)
+        form = ProductForm(instance=product, business=business)
         form.fields['business'].queryset = Business.objects.filter(id=business.id)
 
-    return render(request, 'marketplace/edit_product.html', {'form': form, 'product': product})
+    return render(request, 'marketplace/edit_product.html', {
+        'form': form,
+        'product': product,
+        'business': business,
+        'can_installments': can_installments,
+    })
 
 
 # ==========================================
@@ -599,7 +621,7 @@ def customer_register_view(request):
         form = UserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            login(request, user)
+            login(request, user, backend=MODEL_BACKEND)
             next_url = request.GET.get('next') or 'my_favorites'
             return redirect(next_url)
     else:
@@ -611,7 +633,7 @@ def customer_login_view(request):
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
-            login(request, user)
+            login(request, user, backend=getattr(user, "backend", MODEL_BACKEND))
             next_url = request.GET.get('next') or 'my_favorites'
             return redirect(next_url)
     else:

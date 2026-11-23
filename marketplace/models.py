@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.utils.text import slugify
 from datetime import timedelta
+from decimal import Decimal
 
 # ==========================================
 # MODELO DE NEGOCIOS / TIENDAS
@@ -120,7 +121,6 @@ class Business(models.Model):
             return f"{op_time.strftime('%H:%M')} - {cl_time.strftime('%H:%M')} hrs"
         return "Cerrado hoy"
 
-
 # ==========================================
 # MODELO DE PRODUCTOS
 # ==========================================
@@ -147,6 +147,16 @@ class Product(models.Model):
         ('usado', 'De uso / Seminuevo'),
     ]
 
+    INSTALLMENT_CHOICES = [
+        (0, 'Sin meses / Pago de contado'),
+        (3, '3 meses'),
+        (6, '6 meses'),
+        (9, '9 meses'),
+        (12, '12 meses'),
+        (18, '18 meses'),
+        (24, '24 meses'),
+    ]
+
     business = models.ForeignKey('Business', on_delete=models.CASCADE)
     
     name = models.CharField(max_length=100)
@@ -158,6 +168,17 @@ class Product(models.Model):
 
     is_promo = models.BooleanField(default=False)
     promo_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+
+    # 🌟 PROMOCIÓN A MESES (PLAN BARRIO PRO Y PLAN NEGOCIO ESTRELLA)
+    installment_months = models.PositiveSmallIntegerField(
+        choices=INSTALLMENT_CHOICES,
+        default=0,
+        verbose_name="Promoción a meses"
+    )
+    installment_interest_free = models.BooleanField(
+        default=True,
+        verbose_name="¿Sin intereses?"
+    )
     
     is_express_promo = models.BooleanField(default=False)
     express_promo_start = models.DateTimeField(null=True, blank=True)
@@ -217,7 +238,23 @@ class Product(models.Model):
             return round(discount)
         return 0
 
+    @property
+    def can_use_installments(self):
+        return bool(
+            self.business
+            and self.business.is_active
+            and self.business.plan in ['pro', 'estrella']
+            and (self.installment_months or 0) > 0
+        )
 
+    @property
+    def monthly_installment_amount(self):
+        if not self.can_use_installments:
+            return None
+        base_price = self.promo_price if (self.is_promo and self.promo_price) else self.price
+        if not base_price or self.installment_months <= 0:
+            return None
+        return (Decimal(base_price) / Decimal(self.installment_months)).quantize(Decimal('0.01'))
 # ==========================================
 # MODELO DE RESEÑAS Y VALORACIONES
 # ==========================================
