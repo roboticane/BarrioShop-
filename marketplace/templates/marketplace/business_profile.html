@@ -116,7 +116,7 @@
                             </div>
                         {% endif %}
 
-                        <a href="{% url 'product_detail' product.slug %}" class="w-full h-full flex items-center justify-center">
+                        <a href="{% url 'product_detail' business.slug product.slug %}" class="w-full h-full flex items-center justify-center">
                             {% if product.image %}
                                 <img src="{{ product.image.url }}" alt="{{ product.name }}" class="max-w-full max-h-full object-contain hover:scale-105 transition">
                             {% else %}
@@ -145,7 +145,7 @@
                             {{ product.get_category_display }}
                         </span>
                         
-                        <a href="{% url 'product_detail' product.slug %}" class="font-bold text-gray-900 text-lg mt-1 leading-tight hover:text-blue-600 transition block">
+                        <a href="{% url 'product_detail' business.slug product.slug %}" class="font-bold text-gray-900 text-lg mt-1 leading-tight hover:text-blue-600 transition block">
                             {{ product.name }}
                         </a>
                         
@@ -168,6 +168,13 @@
                                 </span>
                             {% endif %}
                         </div>
+
+                        <!-- Promoción a meses (Planes Barrio Pro y Negocio Estrella) -->
+                        {% if product.can_use_installments %}
+                            <p class="text-xs font-semibold text-emerald-700 mt-1.5">
+                                💳 {{ product.installment_months }} meses{% if product.installment_interest_free %} sin intereses{% endif %} de ${{ product.monthly_installment_amount }}
+                            </p>
+                        {% endif %}
                     </div>
                 </div>
                 
@@ -181,7 +188,7 @@
 
                     <!-- Botón para compartir este producto específico -->
                     <button type="button" 
-                            onclick="shareProduct(this, '{% url 'product_detail' product.slug %}', '{{ product.name|escapejs }}', 'Mira este producto en BarrioShop Puebla')"
+                            onclick="shareProduct(this, '{% url 'product_detail' business.slug product.slug %}', '{{ product.name|escapejs }}', 'Mira este producto en BarrioShop Puebla')"
                             class="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-xs font-bold py-2 px-2.5 rounded-lg transition shadow-sm flex items-center justify-center cursor-pointer"
                             title="Compartir producto">
                         🔗

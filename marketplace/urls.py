@@ -4,17 +4,17 @@ from . import views
 urlpatterns = [
     # Ruta de la página principal / mapa de productos cercanos
     path('', views.nearby_products_view, name='home'),
-    
+
     # Rutas de autenticación y panel del negocio
     path('login/', views.business_login_view, name='business_login'),
     path('logout/', views.business_logout_view, name='business_logout'),
     path('register/', views.register_business_view, name='register_business'),
     path('dashboard/', views.business_dashboard_view, name='dashboard'),
     path('add-product/', views.add_product_view, name='add_product'),
-    
+
     # Ruta para agregar reseñas a los productos
     path('product/<int:product_id>/review/', views.add_review_view, name='add_review'),
-    
+
     # Ruta para restablecer la contraseña al instante desde el login
     path('recuperar-password/', views.reset_password_direct_view, name='reset_password_direct'),
 
@@ -24,8 +24,8 @@ urlpatterns = [
     path('product/<int:product_id>/edit/', views.edit_product_view, name='edit_product'),
     path('product/<int:product_id>/toggle-featured/', views.toggle_featured_view, name='toggle_featured'),
 
-    # 🔗 Detalle del producto con URL amigable (Slug)
-    path('barrioshop/<slug:product_slug>/', views.product_detail_view, name='product_detail'),
+    # 🔗 Detalle del producto con URL amigable (Negocio + Producto)
+    path('barrioshop/<slug:business_slug>/<slug:product_slug>/', views.product_detail_view, name='product_detail'),
 
     # 🔗 Perfil público del negocio con URL amigable (Slug)
     path('business/<slug:business_slug>/', views.business_profile_view, name='business_profile'),
@@ -45,4 +45,4 @@ urlpatterns = [
 
     path('robots.txt', views.robots_txt_view, name='robots_txt'),
     path('dashboard/planes/', views.plans_pricing_view, name='plans_pricing'),
-    ]
+]

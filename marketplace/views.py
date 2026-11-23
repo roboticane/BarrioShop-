@@ -418,18 +418,22 @@ def edit_product_view(request, product_id):
 
 
 # ==========================================
-# VISTA DE DETALLE DEL PRODUCTO (Con Slug)
+# VISTA DE DETALLE DEL PRODUCTO (Con Slug de Negocio y Producto)
 # ==========================================
-def product_detail_view(request, product_slug):
+def product_detail_view(request, business_slug, product_slug):
     DEFAULT_LAT = 19.0413
     DEFAULT_LNG = -98.2062
-    
-    product = get_object_or_404(Product.objects.select_related('business'), slug=product_slug)
-    
-    if not product.business.is_active or not product.is_available:
+
+    business = get_object_or_404(Business, slug=business_slug, is_active=True)
+    product = get_object_or_404(
+        Product.objects.select_related('business'),
+        business=business,
+        slug=product_slug,
+    )
+
+    if not product.is_available:
         return redirect('home')
 
-    b = product.business
     lat_param = request.GET.get('lat', DEFAULT_LAT)
     lng_param = request.GET.get('lng', DEFAULT_LNG)
     try:
@@ -438,11 +442,14 @@ def product_detail_view(request, product_slug):
     except ValueError:
         user_lat = DEFAULT_LAT
         user_lng = DEFAULT_LNG
-        
-    distance = calculate_distance(user_lat, user_lng, b.latitude, b.longitude)
+
+    distance = calculate_distance(user_lat, user_lng, business.latitude, business.longitude)
     product.distance_km = round(distance, 1)
 
-    return render(request, 'marketplace/product_detail.html', {'product': product})
+    return render(request, 'marketplace/product_detail.html', {
+        'product': product,
+        'business': business,
+    })
 
 
 # ==========================================

@@ -135,7 +135,7 @@
                 <div class="min-w-[210px] max-w-[210px] bg-white text-gray-800 rounded-xl p-3 shadow-sm flex flex-col justify-between hover:scale-105 transition">
                     <div>
                         <div class="relative h-28 bg-gray-50 rounded-lg flex items-center justify-center p-1 mb-2">
-                            <a href="{% url 'product_detail' item.slug %}" class="w-full h-full flex items-center justify-center">
+                            <a href="{% url 'product_detail' item.business.slug item.slug %}" class="w-full h-full flex items-center justify-center">
                                 {% if item.image %}
                                     <img src="{{ item.image.url }}" class="max-w-full max-h-full object-contain" alt="{{ item.name }}">
                                 {% else %}
@@ -146,7 +146,7 @@
                                 ⚡ OFERTA
                             </span>
                         </div>
-                        <a href="{% url 'product_detail' item.slug %}" class="font-bold text-xs truncate hover:text-blue-600 transition block">
+                        <a href="{% url 'product_detail' item.business.slug item.slug %}" class="font-bold text-xs truncate hover:text-blue-600 transition block">
                             {{ item.name }}
                         </a>
                         <!-- Enlace al perfil del negocio con SLUG en Ofertas Relámpago -->
@@ -282,7 +282,7 @@
                             </div>
                         {% endif %}
 
-                        <a href="{% url 'product_detail' product.slug %}" class="w-full h-full flex items-center justify-center">
+                        <a href="{% url 'product_detail' product.business.slug product.slug %}" class="w-full h-full flex items-center justify-center">
                             {% if product.image %}
                                 <img src="{{ product.image.url }}" alt="{{ product.name }}" class="max-w-full max-h-full object-contain hover:scale-105 transition">
                             {% else %}
@@ -352,7 +352,7 @@
                         </div>
 
                         <!-- Título -->
-                        <a href="{% url 'product_detail' product.slug %}" class="font-bold text-gray-900 text-lg mt-1 leading-tight hover:text-blue-600 transition block">
+                        <a href="{% url 'product_detail' product.business.slug product.slug %}" class="font-bold text-gray-900 text-lg mt-1 leading-tight hover:text-blue-600 transition block">
                             {{ product.name }}
                         </a>
                         
@@ -458,7 +458,7 @@
                     </a>
 
                     <button type="button" 
-                            onclick="shareProduct(this, '{% url 'product_detail' product.slug %}', '{{ product.name|escapejs }}', 'Mira este producto en BarrioShop Puebla')"
+                            onclick="shareProduct(this, '{% url 'product_detail' product.business.slug product.slug %}', '{{ product.name|escapejs }}', 'Mira este producto en BarrioShop Puebla')"
                             class="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-xs font-bold py-2 px-2.5 rounded-lg transition shadow-sm flex items-center justify-center cursor-pointer"
                             title="Compartir producto">
                         🔗
