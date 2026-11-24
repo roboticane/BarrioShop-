@@ -11,7 +11,7 @@ from django.utils import timezone
 from django.contrib import messages
 from django.http import HttpResponse
 
-from .models import Product, Business, Review, Favorite
+from .models import Product, Business, Review, Favorite, PurchaseCode
 from .forms import BusinessForm, BusinessRegistrationForm, ProductForm, ReviewForm
 
 MODEL_BACKEND = "django.contrib.auth.backends.ModelBackend"
@@ -287,17 +287,72 @@ def business_logout_view(request):
 
 
 # ==========================================
-# VISTA PARA AGREGAR RESEÑAS A PRODUCTOS
+# VISTA PARA AGREGAR RESEÑAS A PRODUCTOS (Compra Verificada)
 # ==========================================
 def add_review_view(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
+    product = get_object_or_404(Product.objects.select_related('business'), id=product_id)
+
     if request.method == 'POST':
+        code_input = request.POST.get('purchase_code', '').strip().upper()
         form = ReviewForm(request.POST)
+
+        if not code_input:
+            messages.error(request, "⚠️ Debes ingresar el código de compra que te dio el vendedor para opinar.")
+            return redirect(request.META.get('HTTP_REFERER', 'home'))
+
+        purchase_code = PurchaseCode.objects.filter(
+            code=code_input,
+            business=product.business,
+            is_used=False
+        ).filter(
+            Q(product__isnull=True) | Q(product=product)
+        ).first()
+
+        if not purchase_code:
+            messages.error(request, "⚠️ El código de compra no es válido, ya fue utilizado o no corresponde a este negocio/producto.")
+            return redirect(request.META.get('HTTP_REFERER', 'home'))
+
         if form.is_valid():
-            review = form.save(commit=False)
-            review.product = product
-            review.save()
-    return redirect('home')
+            with transaction.atomic():
+                review = form.save(commit=False)
+                review.product = product
+                review.purchase_code = purchase_code
+                review.save()
+
+                purchase_code.is_used = True
+                purchase_code.used_at = timezone.now()
+                purchase_code.save()
+
+            messages.success(request, "✅ ¡Gracias! Tu opinión de compra verificada se publicó con éxito.")
+        else:
+            messages.error(request, "⚠️ Revisa los datos de tu calificación e intenta de nuevo.")
+
+    return redirect(request.META.get('HTTP_REFERER', 'home'))
+
+
+# ==========================================
+# GENERAR CÓDIGO DE COMPRA VERIFICADA DESDE EL PANEL
+# ==========================================
+@login_required(login_url='business_login')
+def generate_purchase_code_view(request):
+    try:
+        business = request.user.business
+    except Business.DoesNotExist:
+        return redirect('register_business')
+
+    if request.method == 'POST':
+        product_id = request.POST.get('product_id')
+        product = None
+        if product_id:
+            product = Product.objects.filter(id=product_id, business=business).first()
+
+        purchase_code = PurchaseCode.objects.create(
+            business=business,
+            product=product,
+        )
+        messages.success(request, f"🎟️ Código generado: {purchase_code.code}")
+
+    return redirect('dashboard')
 
 
 # ==========================================
@@ -545,6 +600,7 @@ def business_dashboard_view(request):
     ).count()
     
     promo_prices_count = sum(1 for p in products if p.promo_price is not None and str(p.promo_price).strip() != '')
+    purchase_codes = PurchaseCode.objects.filter(business=business).select_related('product').order_by('-created_at')[:15]
     
     context = {
         'business': business,
@@ -552,6 +608,7 @@ def business_dashboard_view(request):
         'active_express_count': active_express_count,
         'total_products_count': total_products_count,
         'promo_prices_count': promo_prices_count,
+        'purchase_codes': purchase_codes,
     }
     return render(request, 'marketplace/dashboard.html', context)
 

@@ -115,6 +115,59 @@
             </div>
         {% endif %}
 
+        <!-- 🎟️ CÓDIGOS DE COMPRA VERIFICADA -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                <div>
+                    <h2 class="text-base font-extrabold text-gray-900">🎟️ Códigos de Compra Verificada</h2>
+                    <p class="text-xs text-gray-500">Genera un código único de un solo uso y compártelo con los clientes que cerraron compra para que puedan dejar su reseña.</p>
+                </div>
+
+                <form action="{% url 'generate_purchase_code' %}" method="post" class="flex flex-wrap items-center gap-2">
+                    {% csrf_token %}
+                    <select name="product_id" class="text-xs border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 text-gray-700">
+                        <option value="">Cualquier producto del negocio</option>
+                        {% for prod in products %}
+                            <option value="{{ prod.id }}">{{ prod.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-sm transition cursor-pointer">
+                        + Generar código
+                    </button>
+                </form>
+            </div>
+
+            {% if purchase_codes %}
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {% for item in purchase_codes %}
+                        <div class="border rounded-xl p-3 flex items-center justify-between gap-2 {% if item.is_used %}bg-gray-50 border-gray-200 opacity-75{% else %}bg-emerald-50/50 border-emerald-200{% endif %}">
+                            <div>
+                                <span class="font-mono text-sm font-black tracking-wider text-gray-900">{{ item.code }}</span>
+                                <p class="text-[11px] text-gray-500">
+                                    {% if item.product %}{{ item.product.name }}{% else %}Todo el negocio{% endif %}
+                                </p>
+                                {% if item.is_used %}
+                                    <span class="inline-block text-[10px] font-bold text-gray-600 bg-gray-200 px-2 py-0.5 rounded mt-1">Usado</span>
+                                {% else %}
+                                    <span class="inline-block text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded mt-1">Disponible</span>
+                                {% endif %}
+                            </div>
+
+                            {% if not item.is_used %}
+                                <button type="button"
+                                        onclick="copyPurchaseCode('{{ item.code }}', this)"
+                                        class="text-xs font-bold bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 px-3 py-1.5 rounded-lg transition cursor-pointer">
+                                    Copiar
+                                </button>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-xs text-gray-400">Aún no has generado códigos de compra.</p>
+            {% endif %}
+        </div>
+
         <!-- CABECERA DE BIENVENIDA -->
         <div class="bg-white p-6 rounded-2xl shadow-sm mb-6 flex justify-between items-center">
             <div>
@@ -269,5 +322,17 @@
             </div>
         </div>
     </main>
+
+    <script>
+        function copyPurchaseCode(code, btn) {
+            navigator.clipboard.writeText(code).then(() => {
+                const prev = btn.innerText;
+                btn.innerText = '¡Copiado!';
+                setTimeout(() => {
+                    btn.innerText = prev;
+                }, 1800);
+            });
+        }
+    </script>
 </body>
 </html>

@@ -35,6 +35,7 @@ urlpatterns = [
     path('dashboard/product/<int:product_id>/delete/', views.delete_product_view, name='delete_product'),
     path('dashboard/product/<int:product_id>/toggle-stock/', views.toggle_stock_view, name='toggle_stock'),
     path('dashboard/edit-profile/', views.edit_business_profile_view, name='edit_business_profile'),
+    path('dashboard/generar-codigo-compra/', views.generate_purchase_code_view, name='generate_purchase_code'),
 
     # Favoritos y Clientes
     path('favorite/<int:product_id>/toggle/', views.toggle_favorite_view, name='toggle_favorite'),

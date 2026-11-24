@@ -112,7 +112,7 @@
                             <a href="{% url 'business_profile' product.business.slug %}" class="text-xs font-extrabold text-blue-600 hover:underline">
                                 {{ product.business.name }} →
                             </a>
-                            <span class="text-[10px] text-gray-500 block">📍 A {{ product.distance_km }} km de ti ({{ product.business.address }})</span>
+                            <span class="text-[10px] text-gray-500 block">📍 {{ product.business.address }}</span>
                         </div>
                     </div>
 

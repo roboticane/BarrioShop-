@@ -1,9 +1,11 @@
+import secrets
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.utils.text import slugify
 from datetime import timedelta
 from decimal import Decimal
+from django.db.models import Avg
 
 # ==========================================
 # MODELO DE NEGOCIOS / TIENDAS
@@ -121,6 +123,7 @@ class Business(models.Model):
             return f"{op_time.strftime('%H:%M')} - {cl_time.strftime('%H:%M')} hrs"
         return "Cerrado hoy"
 
+
 # ==========================================
 # MODELO DE PRODUCTOS
 # ==========================================
@@ -203,6 +206,13 @@ class Product(models.Model):
                 slug = f"{base_slug}-{counter}"
                 counter += 1
             self.slug = slug
+
+        self.is_promo = bool(
+            self.promo_price is not None
+            and self.price is not None
+            and self.promo_price > 0
+            and self.promo_price < self.price
+        )
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -251,15 +261,60 @@ class Product(models.Model):
     def monthly_installment_amount(self):
         if not self.can_use_installments:
             return None
-        base_price = self.promo_price if (self.is_promo and self.promo_price) else self.price
+        has_valid_discount = (
+            self.promo_price is not None
+            and self.price is not None
+            and self.promo_price > 0
+            and self.promo_price < self.price
+        )
+        base_price = self.promo_price if has_valid_discount else self.price
         if not base_price or self.installment_months <= 0:
             return None
         return (Decimal(base_price) / Decimal(self.installment_months)).quantize(Decimal('0.01'))
+
+    @property
+    def average_rating(self):
+        avg = self.reviews.aggregate(avg=Avg('rating'))['avg']
+        if avg is None:
+            return "0.0"
+        return f"{avg:.1f}"
+
+
+# ==========================================
+# CÓDIGOS DE COMPRA VERIFICADA POR NEGOCIO
+# ==========================================
+class PurchaseCode(models.Model):
+    business = models.ForeignKey('Business', on_delete=models.CASCADE, related_name='purchase_codes')
+    product = models.ForeignKey('Product', on_delete=models.SET_NULL, null=True, blank=True, related_name='purchase_codes')
+    code = models.CharField(max_length=24, unique=True)
+    is_used = models.BooleanField(default=False)
+    used_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        if not self.code:
+            self.code = secrets.token_hex(4).upper()  # Ej. 8F3A9C12
+        else:
+            self.code = self.code.strip().upper()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        estado = "Usado" if self.is_used else "Disponible"
+        return f"{self.code} - {self.business.name} ({estado})"
+
+
 # ==========================================
 # MODELO DE RESEÑAS Y VALORACIONES
 # ==========================================
 class Review(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
+    purchase_code = models.OneToOneField(
+        PurchaseCode,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='review'
+    )
     author_name = models.CharField(max_length=50, default="Vecino Anónimo")
     rating = models.IntegerField(choices=[(i, f"{i} Estrellas") for i in range(1, 6)], default=5)
     comment = models.TextField()
