@@ -164,7 +164,7 @@
                         </a>
                         <!-- Enlace al perfil del negocio con SLUG en Ofertas Relámpago -->
                         <a href="{% url 'business_profile' item.business.slug %}" class="text-[10px] text-gray-500 hover:text-blue-600 hover:underline truncate block">
-                            📍 {{ item.business.name }} ({{ item.distance_km }} km)
+                            📍 {{ item.business.name }}
                         </a>
                     </div>
 
@@ -302,17 +302,6 @@
                                 <div class="flex items-center justify-center h-full text-gray-400 text-sm">Sin imagen</div>
                             {% endif %}
                         </a>
-                        
-                        <!-- Distancia flotante -->
-                        {% if not product.is_featured_active %}
-                            <span class="absolute top-2 left-2 bg-black/60 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full pointer-events-none">
-                                📍 A {{ product.distance_km }} km
-                            </span>
-                        {% else %}
-                            <span class="absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm text-white text-[11px] font-semibold px-2.5 py-1 rounded-full pointer-events-none z-10 shadow-sm">
-                                📍 A {{ product.distance_km }} km
-                            </span>
-                        {% endif %}
 
                         <!-- Condición de la pieza -->
                         <span class="absolute top-2 right-2 text-[10px] font-extrabold px-2 py-1 rounded-md shadow uppercase pointer-events-none {% if product.condition == 'nuevo' %}bg-emerald-100 text-emerald-700{% else %}bg-blue-100 text-blue-700{% endif %}">

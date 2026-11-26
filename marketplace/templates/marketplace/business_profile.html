@@ -24,7 +24,7 @@
     <main class="max-w-7xl mx-auto px-4 py-8">
         
         <!-- TARJETA DE PERFIL DEL NEGOCIO CON LOGOTIPO -->
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             
             <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <!-- Logotipo del Negocio o Inicial -->
@@ -47,7 +47,7 @@
                         {% endif %}
                     </div>
                     
-                    <p class="text-xs text-gray-500">📍 Dirección: {{ business.address }} (A {{ business.distance_km }} km de ti)</p>
+                    <p class="text-xs text-gray-500">📍 Dirección: {{ business.address }}</p>
                     
                     {% if business.delivery_zones %}
                         <p class="text-xs text-amber-700 font-medium mt-1">📍 Puntos de entrega: {{ business.delivery_zones }}</p>
@@ -98,13 +98,35 @@
             </div>
         </div>
 
-        <h2 class="text-lg font-extrabold text-gray-800 mb-4">📦 Productos de este Negocio ({{ products|length }})</h2>
+        <!-- BUSCADOR DE PRODUCTOS DEL NEGOCIO -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 mb-6">
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                <div class="relative flex-1">
+                    <input id="storeProductSearch"
+                           type="text"
+                           oninput="filterStoreProducts()"
+                           placeholder="Buscar en los productos de {{ business.name }}..."
+                           class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button id="clearStoreSearchBtn"
+                        type="button"
+                        onclick="clearStoreSearch()"
+                        class="hidden bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs px-4 py-2.5 rounded-xl transition cursor-pointer">
+                    Limpiar
+                </button>
+            </div>
+        </div>
+
+        <h2 class="text-lg font-extrabold text-gray-800 mb-4">
+            📦 Productos de este Negocio (<span id="visibleProductsCount">{{ products|length }}</span>)
+        </h2>
 
         <!-- CUADRÍCULA DE PRODUCTOS DEL VENDEDOR -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div id="storeProductsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {% for product in products %}
             <!-- TARJETA CON MARCO DORADO RESALTADO PARA PRODUCTOS DESTACADOS -->
-            <div class="rounded-xl overflow-hidden flex flex-col justify-between transition border relative {% if product.is_featured_active %}bg-amber-50/30 border-amber-400 ring-2 ring-amber-400 shadow-xl scale-[1.01]{% else %}bg-white border-gray-100 shadow-md hover:shadow-lg{% endif %}">
+            <div class="store-product-card rounded-xl overflow-hidden flex flex-col justify-between transition border relative {% if product.is_featured_active %}bg-amber-50/30 border-amber-400 ring-2 ring-amber-400 shadow-xl scale-[1.01]{% else %}bg-white border-gray-100 shadow-md hover:shadow-lg{% endif %}"
+                 data-search="{{ product.name|lower }} {{ product.description|lower }} {{ product.get_category_display|lower }}">
                 <div>
                     <div class="relative h-48 bg-gray-50 flex items-center justify-center p-3">
                         
@@ -123,17 +145,6 @@
                                 <div class="flex items-center justify-center h-full text-gray-400 text-sm">Sin imagen</div>
                             {% endif %}
                         </a>
-                        
-                        <!-- Distancia flotante (se mueve abajo si es destacado) -->
-                        {% if not product.is_featured_active %}
-                            <span class="absolute top-2 left-2 bg-black/60 backdrop-blur-sm text-white text-xs font-semibold px-2.5 py-1 rounded-full pointer-events-none">
-                                📍 A {{ product.distance_km }} km
-                            </span>
-                        {% else %}
-                            <span class="absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm text-white text-[11px] font-semibold px-2.5 py-1 rounded-full pointer-events-none z-10 shadow-sm">
-                                📍 A {{ product.distance_km }} km
-                            </span>
-                        {% endif %}
 
                         <span class="absolute top-2 right-2 text-[10px] font-extrabold px-2 py-1 rounded-md shadow uppercase pointer-events-none {% if product.condition == 'nuevo' %}bg-emerald-100 text-emerald-700{% else %}bg-blue-100 text-blue-700{% endif %}">
                             {{ product.get_condition_display }}
@@ -208,9 +219,47 @@
             </div>
             {% endfor %}
         </div>
+
+        <!-- MENSAJE CUANDO NO HAY COINCIDENCIAS EN LA BÚSQUEDA DE LA TIENDA -->
+        <div id="noStoreSearchResults" class="hidden bg-white rounded-xl p-10 text-center shadow-sm mt-6">
+            <p class="text-3xl mb-2">🔍</p>
+            <h3 class="text-base font-bold text-gray-700">No encontramos productos con esa búsqueda en este negocio</h3>
+            <p class="text-xs text-gray-500 mt-1">Intenta con otro nombre, categoría o palabra clave.</p>
+        </div>
     </main>
 
     <script>
+        function filterStoreProducts() {
+            const input = document.getElementById('storeProductSearch');
+            const clearBtn = document.getElementById('clearStoreSearchBtn');
+            const counter = document.getElementById('visibleProductsCount');
+            const noResults = document.getElementById('noStoreSearchResults');
+            const cards = document.querySelectorAll('.store-product-card');
+
+            const term = (input.value || '').trim().toLowerCase();
+            clearBtn.classList.toggle('hidden', term.length === 0);
+
+            let visibleCount = 0;
+            cards.forEach(card => {
+                const haystack = card.getAttribute('data-search') || '';
+                const matches = !term || haystack.includes(term);
+                card.classList.toggle('hidden', !matches);
+                if (matches) visibleCount++;
+            });
+
+            if (counter) counter.textContent = visibleCount;
+            if (noResults && cards.length > 0) {
+                noResults.classList.toggle('hidden', visibleCount > 0);
+            }
+        }
+
+        function clearStoreSearch() {
+            const input = document.getElementById('storeProductSearch');
+            input.value = '';
+            filterStoreProducts();
+            input.focus();
+        }
+
         function sharePage(btn, title, text) {
             const url = window.location.href;
             if (navigator.share) {
