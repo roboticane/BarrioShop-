@@ -182,6 +182,30 @@ class ProductForm(forms.ModelForm):
             self.fields['installment_interest_free'].disabled = True
             self.fields['installment_months'].help_text = "Disponible en Plan Barrio Pro y Plan Negocio Estrella."
 
+    def clean_search_tags(self):
+        raw_tags = (self.cleaned_data.get('search_tags') or '').strip()
+        if not raw_tags:
+            return ''
+
+        # Si escriben múltiples palabras o frases sin coma, exigimos separador por coma
+        if ',' not in raw_tags and len(raw_tags.split()) > 1:
+            raise forms.ValidationError(
+                "⚠️ Todas las etiquetas deben ir separadas por una coma (ej. moneda, mundial 2026, coleccionable)."
+            )
+
+        raw_parts = [part.strip() for part in raw_tags.split(',')]
+        if any(part == '' for part in raw_parts):
+            raise forms.ValidationError(
+                "⚠️ Revisa las comas: no dejes etiquetas vacías entre comas."
+            )
+
+        if len(raw_parts) > 3:
+            raise forms.ValidationError(
+                "⚠️ Solo puedes agregar un máximo de 3 etiquetas de búsqueda separadas por coma."
+            )
+
+        return ', '.join(raw_parts)
+
     def clean(self):
         cleaned_data = super().clean()
         can_installments = bool(
@@ -202,7 +226,7 @@ class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
         fields = [
-            'business', 'name', 'description', 'warranty', 'price',
+            'business', 'name', 'description', 'warranty', 'search_tags', 'price',
             'condition', 'is_promo', 'promo_price',
             'installment_months', 'installment_interest_free',
             'image', 'image_2', 'image_3', 'category'
@@ -212,6 +236,10 @@ class ProductForm(forms.ModelForm):
             'name': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'}),
             'description': forms.Textarea(attrs={'class': 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500', 'rows': 3}),
             'warranty': forms.TextInput(attrs={'class': 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500', 'placeholder': 'Ej. 30 días de garantía'}),
+            'search_tags': forms.TextInput(attrs={
+                'class': 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500',
+                'placeholder': 'Ej. moneda, mundial 2026, coleccionable'
+            }),
             'price': forms.NumberInput(attrs={'class': 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500', 'step': 'any'}),
             'condition': forms.Select(attrs={'class': 'w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500'}),
             'is_promo': forms.CheckboxInput(attrs={'class': 'h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'}),

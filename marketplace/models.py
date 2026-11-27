@@ -168,6 +168,13 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     condition = models.CharField(max_length=20, choices=CONDITION_CHOICES, default='nuevo')
     warranty = models.CharField(max_length=255, blank=True, null=True, verbose_name="Garantía del producto", help_text="Ej. Sin garantía, 30 días con el vendedor, etc.")
+    search_tags = models.CharField(
+        max_length=150,
+        blank=True,
+        null=True,
+        verbose_name="Etiquetas de búsqueda",
+        help_text="Máximo 3 etiquetas separadas por coma (ej. moneda, mundial 2026, coleccionable)"
+    )
 
     is_promo = models.BooleanField(default=False)
     promo_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)

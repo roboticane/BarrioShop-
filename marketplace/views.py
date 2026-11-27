@@ -96,10 +96,18 @@ def nearby_products_view(request):
                 }
 
     elif query:
+        search_terms = [term.strip() for term in query.split() if term.strip()]
+        query_filter = Q()
+        for term in search_terms:
+            query_filter &= (
+                Q(name__icontains=term) |
+                Q(description__icontains=term) |
+                Q(search_tags__icontains=term) |
+                Q(business__name__icontains=term)
+            )
+
         filtered_products = Product.objects.select_related('business').filter(
-            Q(name__icontains=query) | 
-            Q(description__icontains=query) | 
-            Q(business__name__icontains=query),
+            query_filter,
             business__is_active=True,
             is_available=True
         )
@@ -501,9 +509,20 @@ def product_detail_view(request, business_slug, product_slug):
     distance = calculate_distance(user_lat, user_lng, business.latitude, business.longitude)
     product.distance_km = round(distance, 1)
 
+    if product.image:
+        og_image_url = request.build_absolute_uri(product.image.url)
+    elif business.logo:
+        og_image_url = request.build_absolute_uri(business.logo.url)
+    else:
+        og_image_url = "https://fav.farm/🛒"
+
+    og_description = product.description or f"Disponible en {business.name} ({business.address})."
+
     return render(request, 'marketplace/product_detail.html', {
         'product': product,
         'business': business,
+        'og_image_url': og_image_url,
+        'og_description': og_description,
     })
 
 
@@ -538,12 +557,21 @@ def business_profile_view(request, business_slug):
     if request.user.is_authenticated:
         user_favorite_ids = list(Favorite.objects.filter(user=request.user).values_list('product_id', flat=True))
 
+    og_image_url = (
+        request.build_absolute_uri(business.logo.url)
+        if business.logo
+        else "https://fav.farm/🛒"
+    )
+    og_description = business.description or business.address or f"Catálogo de {business.name} en BarrioShop Puebla."
+
     context = {
         'business': business,
         'products': products,
         'user_lat': user_lat,
         'user_lng': user_lng,
         'user_favorite_ids': user_favorite_ids,
+        'og_image_url': og_image_url,
+        'og_description': og_description,
     }
     return render(request, 'marketplace/business_profile.html', context)
 
