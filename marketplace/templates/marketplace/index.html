@@ -7,6 +7,14 @@
     
     <!-- 🛒 Favicon de carrito para la pestaña del navegador -->
     <link rel="icon" href="https://fav.farm/🛒" />
+
+    <!-- VISTAS PREVIAS PARA WHATSAPP / FACEBOOK (OPEN GRAPH) -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="BarrioShop Puebla">
+    <meta property="og:title" content="BarrioShop - Compra Local en Puebla">
+    <meta property="og:description" content="Explora productos, ofertas relámpago y negocios locales en Puebla. Pide directo por WhatsApp.">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:image" content="https://fav.farm/🛒">
     
     <!-- Carga de Tailwind CSS para el diseño visual -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -106,6 +114,11 @@
     </header>
 
     <!-- ========================================== -->
+    <!-- BANNER PROMOCIONAL DINÁMICO (DESDE ADMIN)  -->
+    <!-- ========================================== -->
+    {% include 'marketplace/hero_banner.html' %}
+
+    <!-- ========================================== -->
     <!-- MENSAJES DEL SISTEMA (RESEÑAS / AVISOS)   -->
     <!-- ========================================== -->
     {% if messages %}
@@ -129,7 +142,7 @@
                     <span class="text-2xl animate-bounce">⚡</span>
                     <div>
                         <h2 class="text-sm font-black tracking-wider uppercase">Ofertas Relámpago</h2>
-                        <p class="text-[11px] text-amber-100">Productos seleccionados por negocios cercanos (A menos de 5 km)</p>
+                        <p class="text-[11px] text-amber-100">Productos seleccionados por negocios locales</p>
                     </div>
                 </div>
                 <span class="bg-black/30 text-[10px] font-bold px-3 py-1 rounded-full border border-white/20">
@@ -199,7 +212,7 @@
     <!-- ========================================== -->
     <!-- CONTENIDO PRINCIPAL -->
     <!-- ========================================== -->
-    <main class="max-w-7xl mx-auto px-4 py-8">
+    <main id="catalogo" class="max-w-7xl mx-auto px-4 py-8">
         
         <!-- Barra de Búsqueda y Publicación de Productos -->
         <div class="mb-6 flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-2xl shadow-sm">

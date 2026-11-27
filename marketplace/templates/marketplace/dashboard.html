@@ -168,6 +168,42 @@
             {% endif %}
         </div>
 
+        <!-- 📲 CÓDIGO QR CON LOGO PARA IMPRIMIR -->
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 mb-6 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div class="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
+                <div class="p-3 bg-white border-2 border-gray-200 rounded-2xl shadow-xs shrink-0">
+                    <img src="{% url 'business_qr' %}" alt="QR de {{ business.name }}" class="w-36 h-36 object-contain">
+                </div>
+
+                <div class="space-y-1.5 max-w-md">
+                    <span class="inline-block text-[11px] font-bold bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full">
+                        📲 Código QR de tu catálogo
+                    </span>
+                    <h3 class="text-base font-extrabold text-gray-900">Imprime y comparte tu QR</h3>
+                    <p class="text-xs text-gray-600 leading-relaxed">
+                        Tus clientes pueden escanearlo desde su celular para ver directamente tu perfil y productos en BarrioShop.
+                    </p>
+                    <p class="text-[11px] text-gray-400 break-all">
+                        Enlace: {{ request.scheme }}://{{ request.get_host }}{% url 'business_profile' business.slug %}
+                    </p>
+                    <p class="text-[11px] text-amber-700 font-medium">
+                        💡 Tip de impresión: imprímelo en papel o etiqueta mate/semimate (mínimo 3 × 3 cm) para evitar reflejos.
+                    </p>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-2 w-full sm:w-auto shrink-0">
+                <a href="{% url 'business_qr' %}?download=1"
+                   class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl text-center shadow-sm transition">
+                    ⬇️ Descargar QR (PNG)
+                </a>
+                <a href="{% url 'business_profile' business.slug %}" target="_blank"
+                   class="bg-gray-100 hover:bg-gray-200 text-gray-800 text-xs font-bold px-4 py-2 rounded-xl text-center transition">
+                    👁️ Ver perfil público
+                </a>
+            </div>
+        </div>
+
         <!-- CABECERA DE BIENVENIDA -->
         <div class="bg-white p-6 rounded-2xl shadow-sm mb-6 flex justify-between items-center">
             <div>

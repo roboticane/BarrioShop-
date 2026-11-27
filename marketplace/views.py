@@ -1,3 +1,4 @@
+import io
 import json
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import login, authenticate, logout, get_user_model
@@ -5,13 +6,16 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 from django.db import IntegrityError, transaction
+from django.urls import reverse
 from math import radians, sin, cos, sqrt, atan2
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.contrib import messages
 from django.http import HttpResponse
+import qrcode
+from PIL import Image, ImageDraw
 
-from .models import Product, Business, Review, Favorite, PurchaseCode
+from .models import Product, Business, Review, Favorite, PurchaseCode, PromoBanner
 from .forms import BusinessForm, BusinessRegistrationForm, ProductForm, ReviewForm
 
 MODEL_BACKEND = "django.contrib.auth.backends.ModelBackend"
@@ -149,10 +153,19 @@ def nearby_products_view(request):
         key=lambda x: (not x.is_featured_active, x.distance_km)
     )
 
+    now = timezone.now()
+
+    promo_banners = PromoBanner.objects.filter(
+        is_active=True
+    ).filter(
+        Q(start_date__isnull=True) | Q(start_date__lte=now),
+        Q(end_date__isnull=True) | Q(end_date__gte=now),
+    ).order_by('order', '-created_at')[:5]
+
     express_promos = []
     active_express_products = Product.objects.select_related('business').filter(
         is_express_promo=True,
-        express_promo_end__gt=timezone.now(),
+        express_promo_end__gt=now,
         business__is_active=True,
         is_available=True
     )
@@ -172,6 +185,7 @@ def nearby_products_view(request):
         'products': nearby_items,
         'query': query,
         'selected_category': selected_category,
+        'promo_banners': promo_banners,
         'express_promos': express_promos,
         'user_lat': user_lat,
         'user_lng': user_lng,
@@ -639,6 +653,70 @@ def business_dashboard_view(request):
         'purchase_codes': purchase_codes,
     }
     return render(request, 'marketplace/dashboard.html', context)
+
+
+# ==========================================
+# GENERAR CÓDIGO QR DEL NEGOCIO CON LOGO
+# ==========================================
+@login_required(login_url='business_login')
+def business_qr_view(request):
+    try:
+        business = request.user.business
+    except Business.DoesNotExist:
+        return redirect('register_business')
+
+    profile_url = request.build_absolute_uri(
+        reverse('business_profile', args=[business.slug])
+    )
+
+    qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=12,
+        border=4,
+    )
+    qr.add_data(profile_url)
+    qr.make(fit=True)
+
+    qr_img = qr.make_image(fill_color="#111827", back_color="#FFFFFF").convert("RGBA")
+    qr_w, qr_h = qr_img.size
+
+    if business.logo:
+        try:
+            with business.logo.open("rb") as f:
+                logo_img = Image.open(f).convert("RGBA")
+
+            logo_max_size = int(qr_w * 0.20)
+            logo_img.thumbnail((logo_max_size, logo_max_size), Image.Resampling.LANCZOS)
+
+            pad = max(6, int(logo_max_size * 0.14))
+            badge_w = logo_img.width + pad * 2
+            badge_h = logo_img.height + pad * 2
+
+            badge = Image.new("RGBA", (badge_w, badge_h), (255, 255, 255, 255))
+            mask = Image.new("L", (badge_w, badge_h), 0)
+            draw = ImageDraw.Draw(mask)
+            radius = max(8, int(min(badge_w, badge_h) * 0.22))
+            draw.rounded_rectangle([(0, 0), (badge_w, badge_h)], radius=radius, fill=255)
+
+            qr_img.paste(badge, ((qr_w - badge_w) // 2, (qr_h - badge_h) // 2), mask)
+            qr_img.paste(
+                logo_img,
+                ((qr_w - logo_img.width) // 2, (qr_h - logo_img.height) // 2),
+                logo_img,
+            )
+        except Exception:
+            pass
+
+    final_img = qr_img.convert("RGB")
+    buffer = io.BytesIO()
+    final_img.save(buffer, format="PNG", optimize=True)
+    buffer.seek(0)
+
+    response = HttpResponse(buffer.getvalue(), content_type="image/png")
+    if request.GET.get("download") == "1":
+        response["Content-Disposition"] = f'attachment; filename="qr-{business.slug}.png"'
+    return response
 
 
 # ==========================================

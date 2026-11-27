@@ -344,3 +344,36 @@ class Favorite(models.Model):
 
     def __str__(self):
         return f"{self.user.username} -> {self.product.name}"
+
+# ==========================================
+# BANNER DE PUBLICIDAD
+# ==========================================
+
+class PromoBanner(models.Model):
+    STYLE_CHOICES = [
+        ('blue', 'Azul BarrioShop'),
+        ('emerald', 'Verde Negocios'),
+        ('amber', 'Dorado / Oferta'),
+        ('dark', 'Oscuro Elegante'),
+    ]
+
+    title = models.CharField("Título principal", max_length=120)
+    badge_text = models.CharField("Etiqueta superior (ej. 🛍️ Nuevo)", max_length=50, blank=True)
+    subtitle = models.CharField("Subtítulo / Descripción corta", max_length=220, blank=True)
+    image = models.ImageField("Imagen del banner (opcional, 1200x320 recomendada)", upload_to='banners/', blank=True, null=True)
+    button_text = models.CharField("Texto del botón", max_length=40, default="Ver más", blank=True)
+    button_url = models.CharField("Enlace (ej. /register/ o #catalogo)", max_length=255, default="#catalogo", blank=True)
+    bg_style = models.CharField("Color si no hay imagen", max_length=20, choices=STYLE_CHOICES, default='blue')
+    order = models.PositiveIntegerField("Orden de aparición", default=0)
+    is_active = models.BooleanField("Activo", default=True)
+    start_date = models.DateTimeField("Mostrar desde (opcional)", blank=True, null=True)
+    end_date = models.DateTimeField("Ocultar después de (opcional)", blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', '-created_at']
+        verbose_name = "Banner Promocional"
+        verbose_name_plural = "Banners Promocionales"
+
+    def __str__(self):
+        return self.title
